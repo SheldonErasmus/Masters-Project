@@ -1,0 +1,79 @@
+simple_hexapod:
+  # Publish all joint states -----------------------------------
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50
+
+  # Position Controllers --------------------------------------
+  Th1_1_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th1_1
+    pid: {p: 5.5, i: 0.1, d: 5.0} #reg
+  Th1_2_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th1_2
+    pid: {p: 0.3, i: 0.0, d: 0.1} #Nie die beste nie
+  Th1_3_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th1_3
+    pid: {p: 3.5, i: 0.3, d: 0.1} #reg
+  Th1_4_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th1_4
+    pid: {p: 5.5, i: 0.1, d: 5.0} #reg
+  Th1_5_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th1_5
+    pid: {p: 0.5, i: 0.01, d: 0.3} #Nie die beste
+  Th1_6_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th1_6
+    pid: {p: 3.5, i: 0.3, d: 0.1} #reg
+  Th2_1_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th2_1
+    pid: {p: 2.5, i: 0.3, d: 2.5}
+  Th3_1_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th3_1
+    pid: {p: 5.0, i: 1.0, d: 0.5}
+  Th2_6_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th2_6
+    pid: {p: 2.5, i: 0.1, d: 0.2}
+  Th3_6_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th3_6
+    pid: {p: 5.0, i: 1.0, d: 0.5}
+  Th2_5_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th2_5
+    pid: {p: 2.5, i: 0.1, d: 0.3}
+  Th3_5_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th3_5
+    pid: {p: 5.0, i: 1.0, d: 0.5}
+  Th2_4_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th2_4
+    pid: {p: 2.5, i: 1.0, d: 2.5}
+  Th3_4_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th3_4
+    pid: {p: 5.0, i: 1.0, d: 0.5}
+  Th2_3_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th2_3
+    pid: {p: 2.5, i: 1.0, d: 0.2}
+  Th3_3_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th3_3
+    pid: {p: 5.0, i: 1.0, d: 0.5}
+  Th2_2_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th2_2
+    pid: {p: 2.5, i: 1.0, d: 0.2}
+  Th3_2_position_controller:
+    type: effort_controllers/JointPositionController
+    joint: Th3_2
+    pid: {p: 5.0, i: 1.0, d: 0.5}

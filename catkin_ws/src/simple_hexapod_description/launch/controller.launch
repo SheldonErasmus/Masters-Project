@@ -1,0 +1,11 @@
+<launch>
+
+<rosparam file="$(find simple_hexapod_description)/launch/controller.yaml" command="load"/>
+<node args=" joint_state_controller " name="controller_spawner" ns="simple_hexapod" output="screen" pkg="controller_manager" respawn="false" type="spawner"/>
+<node name="robot_state_publisher" output="screen" pkg="robot_state_publisher" respawn="false" type="robot_state_publisher">
+  <remap from="/joint_states" to="/simple_hexapod/joint_states"/>
+</node>
+
+</launch>
+
+<!-- Th1_1_position_controller Th1_2_position_controller Th1_3_position_controller Th1_4_position_controller Th1_5_position_controller Th1_6_position_controller Th2_1_position_controller Th3_1_position_controller Th2_6_position_controller Th3_6_position_controller Th2_5_position_controller Th3_5_position_controller Th2_4_position_controller Th3_4_position_controller Th2_3_position_controller Th3_3_position_controller Th2_2_position_controller Th3_2_position_controller -->
