@@ -476,6 +476,8 @@ void SetNextPathPoint(float XP[][Pathsize*2-2],float YP[][Pathsize*2-2],float ZP
   }
 }
 
+float AngleSmoothPrev = 150;
+float AngleSmooth = 0;
 
 void SetAngles(float* th1,float* th2,float* th3 ,float spd1,float spd2, float spd3)
 {
@@ -499,7 +501,7 @@ void SetAngles(float* th1,float* th2,float* th3 ,float spd1,float spd2, float sp
       Spd[num] = (spd2==-1) ? (abs(prevAngle[num]-Angle[num])*60.0)/(360.0*10.0/1000.0) : spd2;
       Id[num] = 1;
       
-      Serial.print(prevAngle[num]-Angle[num]);Serial.print(" ");Serial.println(Spd[num]);
+      //Serial.print(prevAngle[num]-Angle[num]);Serial.print(" ");Serial.println(Spd[num]);
       /*if(abs(prevAngle[num]-Angle[num]) >= 0.15)*/ prevAngle[num] = Angle[num];
   
       dataStr[0] = 0; 
@@ -522,105 +524,111 @@ void SetAngles(float* th1,float* th2,float* th3 ,float spd1,float spd2, float sp
     else if (num == 3)  //thata12
     {
       Angle[num] = th1[1]*180.0/M_PI+150.0;
-      Spd[num] = 0;
+      Spd[num] = spd1;
       Id[num] = 3;
+
+      AngleSmooth = Angle[num]*0.1 + AngleSmoothPrev*0.9;
+      AngleSmoothPrev = AngleSmooth;
+      Serial.print(Angle[num]);
+      Serial.print(" , ");
+      Serial.println(AngleSmooth);
  
     }
     else if (num == 4)  //thata22
     {
-      Angle[num] = th2[1];
-      Spd[num] = 0;
+      Angle[num] = -th2[1]*180.0/M_PI+150.0;
+      Spd[num] = spd2;
       Id[num] = 4;
 
     }
     else if (num == 5)  //thata32
     {
-      Angle[num] = th3[1];
-      Spd[num] = 0;
+      Angle[num] = -th3[1]*180.0/M_PI+150.0;
+      Spd[num] = spd3;
       Id[num] = 5;
 
     }
     else if (num == 6)  //thata13
     {
-      Angle[num] = th1[2];
-      Spd[num] = 0;
+      Angle[num] = th1[2]*180.0/M_PI+150.0;
+      Spd[num] = spd1;
       Id[num] = 6;
 
     }
     else if (num == 7)  //thata23
     {
-      Angle[num] = th2[2];
-      Spd[num] = 0;
+      Angle[num] = -th2[2]*180.0/M_PI+150.0;
+      Spd[num] = spd2;
       Id[num] = 7;
 
     }
     else if (num == 8)  //thata33
     {
-      Angle[num] = th3[2];
-      Spd[num] = 0;
+      Angle[num] = -th3[2]*180.0/M_PI+150.0;
+      Spd[num] = spd3;
       Id[num] = 8;
 
     }
     else if (num == 9)  //thata14
     {
-      Angle[num] = th1[3];
-      Spd[num] = 0;
+      Angle[num] = th1[3]*180.0/M_PI+150.0;
+      Spd[num] = spd1;
       Id[num] = 9;
 
     }
     else if (num == 10) //thata24
     {
-      Angle[num] = th2[3];
-      Spd[num] = 0;
+      Angle[num] = -th2[3]*180.0/M_PI+150.0;
+      Spd[num] = spd2;
       Id[num] = 10;
 
     }
     else if (num == 11) //thata34
     {
-      Angle[num] = th3[3];
-      Spd[num] = 0;
+      Angle[num] = -th3[3]*180.0/M_PI+150.0;
+      Spd[num] = spd3;
       Id[num] = 11;
 
     }
     else if (num == 12) //thata15
     {
-      Angle[num] = th1[4];
-      Spd[num] = 0;
+      Angle[num] = th1[4]*180.0/M_PI+150.0;
+      Spd[num] = spd1;
       Id[num] = 12;
 
     }
     else if (num == 13) //thata25
     {
-      Angle[num] = th2[4];
-      Spd[num] = 0;
+      Angle[num] = -th2[4]*180.0/M_PI+150.0;
+      Spd[num] = spd2;
       Id[num] = 13;
 
     }
     else if (num == 14) //thata35
     {
-      Angle[num] = th3[4];
-      Spd[num] = 0;
+      Angle[num] = -th3[4]*180.0/M_PI+150.0;
+      Spd[num] = spd3;
       Id[num] = 14;
 
     }
     else if (num == 15) //thata16
     {
-      Angle[num] = th1[5];
-      Spd[num] = 0;
+      Angle[num] = th1[5]*180.0/M_PI+150.0;
+      Spd[num] = spd1;
       Id[num] = 15;
 
     }
     else if (num == 16) //thata26
     {
-      Angle[num] = th2[5];
-      Spd[num] = 0;
+      Angle[num] = -th2[5]*180.0/M_PI+150.0;
+      Spd[num] = spd2;
       Id[num] = 16;
 
     }
     else if (num == 17) //thata36
     {
-      Angle[num] = th3[5];
-      Spd[num] = 0;
+      Angle[num] = -th3[5]*180.0/M_PI+150.0;
+      Spd[num] = spd3;
       Id[num] = 17;
 
     }

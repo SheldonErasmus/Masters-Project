@@ -12,7 +12,7 @@ flag_a = 0; flag_y = 0; flag_x = 0; flag_b = 0; flag_LB = 0; flag_RB = 0
 mode = 0; mode_selected = -1
 start = 0
 axX =0.0; axY = 0.0; flag_Lstick = 0
-vx = 0.0; vy = 0.0
+vx = 0.0; vy = 0.0; totV = 0.0
 
 rospy.init_node('XboxController')
 
@@ -94,9 +94,10 @@ def on_mode_button_released(button):
 def on_select_button_pressed(button):
     #print('Button {0} was pressed'.format(button.name))
     global mode_selected
-    mode_selected = mode
-    print('mode selected: {0}'.format(mode_selected))
-    mode_pub.publish(data=mode_selected)
+    if totV == 0.0:
+        mode_selected = mode
+        print('mode selected: {0}'.format(mode_selected))
+        mode_pub.publish(data=mode_selected)
 def on_select_button_released(button):
     #print('Button {0} was released'.format(button.name))
     pass

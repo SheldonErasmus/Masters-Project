@@ -3,14 +3,13 @@
 import rospy
 from hexapodC import HexapodC
 from sensor_msgs.msg import NavSatFix, Imu
-from wgs2ned import WGS2NED
 from math import atan2, sqrt, cos, sin, pi, copysign
 from numpy import array
 from ToEulerAngles import ToEulerAng
-from gazebo_msgs.srv import SpawnModel, DeleteModel
 from geometry_msgs.msg import Pose, Point
 import time
 from GenerateMotionProfile import StepProfile
+from marvelmind_nav.msg import hedge_pos_ang,marvelmind_waypoint,hedge_imu_fusion
 
 #Global variables
 startupFlag = 1
@@ -22,23 +21,39 @@ e = 0.0
 d = 0.0
 curr_Head_hex = 0.0; hex_roll = 0.0; hex_pitch = 0.0
 
+addr=0; ts=0; Xpos=0; Ypos=0; Zpos=0; Ang=0; Flag=0
+index=0; total_items=0; movement_type=0; param1=0; param2=0; param3=0
 
-def nav_cb(msg):
-    global startupFlag, refLat, refLon, refAlt, n, e, d
-    if startupFlag:
-        startupFlag = 0
-        refLat = msg.latitude
-        refLon = msg.longitude
-        refAlt = msg.altitude
-    Lat = msg.latitude
-    Lon = msg.longitude
-    Alt = msg.altitude
-    (n,e,d) = WGS2NED(refLat,refLon,refAlt,Lat,Lon,Alt)
+def hedge_pos_ang_callback(msg):
+    global addr, ts, Xpos, Ypos, Zpos, Ang, Flag, e, n
+
+    addr = msg.address
+    ts = msg.timestamp_ms
+    Xpos = msg.x_m
+    e = Xpos
+    Ypos = msg.y_m
+    n = Ypos
+    Zpos = msg.z_m
+    Ang = msg.angle
+    Flag = msg.flags
+    # print(addr, ts, Xpos, Ypos, Zpos, Ang, Flag)
 
 def imu_cb(msg):
     global curr_Head_hex,hex_roll,hex_pitch
-    (hex_roll,hex_pitch,curr_Head_hex) = ToEulerAng(msg.orientation.x,msg.orientation.y,msg.orientation.z,msg.orientation.w)
+    (hex_roll,hex_pitch,curr_Head_hex) = ToEulerAng(msg.qx,msg.qy,msg.qz,msg.qw)
     curr_Head_hex = -curr_Head_hex
+    print(hex_roll,hex_pitch,curr_Head_hex)
+
+def marvelmind_waypoint_callback(msg):
+    global index, total_items, movement_type, param1, param2, param3
+
+    index = msg.item_index
+    total_items = msg.total_items
+    movement_type = msg.movement_type
+    param1 = msg.param1
+    param2 = msg.param2
+    param3 = msg.param3
+    print(index, total_items, movement_type, param1, param2, param3)
 
 if __name__ == '__main__':
     rospy.init_node("WayP_Nav")
@@ -46,20 +61,15 @@ if __name__ == '__main__':
     robot = HexapodC()
     stepP = StepProfile(0.1)
     
-    subGPS = rospy.Subscriber(robot.ns + "fix", NavSatFix, nav_cb, queue_size=1)
-    subIMU = rospy.Subscriber(robot.ns + "imu", Imu, imu_cb, queue_size=1)
+    subIndoorGPS = rospy.Subscriber("hedge_pos_ang", hedge_pos_ang, hedge_pos_ang_callback, queue_size=1)
+    subIMU = rospy.Subscriber("hedge_imu_fusion", hedge_imu_fusion, imu_cb, queue_size=1)
+    rospy.Subscriber("marvelmind_waypoint", marvelmind_waypoint, marvelmind_waypoint_callback, queue_size=1) 
 
     Esrc = float(input("Enter Esrc: "))
     Nsrc = float(input("Enter Nsrc: ") )
     Edest = float(input("Enter Edest: "))
     Ndest = float(input("Enter Ndest: ")) 
-      
-    spawn_model_client = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
-    delete_model_client = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)
-    spawn_model_client(model_name='can1',model_xml=open('/home/sheldon/.gazebo/models/cricket_ball/model.sdf', 'r').read(),robot_namespace='/can1',initial_pose=Pose(position=Point(Nsrc,-Esrc,0)),reference_frame='world')
-    spawn_model_client(model_name='can2',model_xml=open('/home/sheldon/.gazebo/models/cricket_ball/model.sdf', 'r').read(),robot_namespace='/can2',initial_pose=Pose(position=Point(Ndest,-Edest,0)),reference_frame='world')
 
-    cannum = 2
     flag = 1
     prevTime = time.time()
 
@@ -111,8 +121,6 @@ if __name__ == '__main__':
                 Ndest = float(input("Enter new Ndest: ") )
                 Head_t = atan2((Edest-Esrc),(Ndest-Nsrc))
 
-                cannum = cannum +1
-                spawn_model_client(model_name='can'+str(cannum) ,model_xml=open('/home/sheldon/.gazebo/models/cricket_ball/model.sdf', 'r').read(),robot_namespace='/can'+str(cannum),initial_pose=Pose(position=Point(Ndest,-Edest,0)),reference_frame='world')
                 flag = 0
 
             if abs(Head_t - curr_Head_hex) > 0.01:
