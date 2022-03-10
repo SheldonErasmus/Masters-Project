@@ -1,0 +1,5 @@
+<launch>
+
+    <node pkg = "AnotherHexapod_stuff" type = "PlannerV1.py" name = "planner"> </node>
+
+</launch>
