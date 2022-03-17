@@ -5,31 +5,43 @@ inX1 = Interpolation(429.75)
 inY1 = Interpolation(0.0)
 inZ1 = Interpolation(8.0)
 inYaw1 = Interpolation(0.0)
+inPitch1 = Interpolation(0.0)
+inRoll1 = Interpolation(0.0)
 
 inX2 = Interpolation(214.875)
 inY2 = Interpolation(-372.174)
 inZ2 = Interpolation(8.0)
 inYaw2 = Interpolation(0.0)
+inPitch2 = Interpolation(0.0)
+inRoll2 = Interpolation(0.0)
 
 inX3 = Interpolation(-214.875)
 inY3 = Interpolation(-372.174)
 inZ3 = Interpolation(8.0)
 inYaw3 = Interpolation(0.0)
+inPitch3 = Interpolation(0.0)
+inRoll3 = Interpolation(0.0)
 
 inX4 = Interpolation(-429.75)
 inY4 = Interpolation(0.0)
 inZ4 = Interpolation(8.0)
 inYaw4 = Interpolation(0.0)
+inPitch4 = Interpolation(0.0)
+inRoll4 = Interpolation(0.0)
 
 inX5 = Interpolation(-214.875)
 inY5 = Interpolation(372.174)
 inZ5 = Interpolation(8.0)
 inYaw5 = Interpolation(0.0)
+inPitch5 = Interpolation(0.0)
+inRoll5 = Interpolation(0.0)
 
 inX6 = Interpolation(214.875)
 inY6 = Interpolation(372.174)
 inZ6 = Interpolation(8.0)
 inYaw6 = Interpolation(0.0)
+inPitch6 = Interpolation(0.0)
+inRoll6 = Interpolation(0.0)
 
 
 
@@ -48,31 +60,43 @@ def IK(x,y,z,leg,dt,roll=0.0,pitch=0.0,yaw=0.0,inEn=1):
         yp = inY1.go(y,dt)
         zp = inZ1.go(z,dt)
         yawp = inYaw1.go(yaw,dt)
+        pitchp = inPitch1.go(pitch,dt)
+        rollp = inRoll1.go(roll,dt)
     if leg == 1:
         xp = inX2.go(x,dt)
         yp = inY2.go(y,dt)
         zp = inZ2.go(z,dt)
         yawp = inYaw2.go(-yaw,dt)
+        pitchp = inPitch2.go(pitch,dt)
+        rollp = inRoll2.go(roll,dt)
     if leg == 2:
         xp = inX3.go(x,dt)
         yp = inY3.go(y,dt)
         zp = inZ3.go(z,dt)
         yawp = inYaw3.go(yaw,dt)
+        pitchp = inPitch3.go(pitch,dt)
+        rollp = inRoll3.go(roll,dt)
     if leg == 3:
         xp = inX4.go(x,dt)
         yp = inY4.go(y,dt)
         zp = inZ4.go(z,dt)
         yawp = inYaw4.go(-yaw,dt)
+        pitchp = inPitch4.go(pitch,dt)
+        rollp = inRoll4.go(roll,dt)
     if leg == 4:
         xp = inX5.go(x,dt)
         yp = inY5.go(y,dt)
         zp = inZ5.go(z,dt)
         yawp = inYaw5.go(yaw,dt)
+        pitchp = inPitch5.go(pitch,dt)
+        rollp = inRoll5.go(roll,dt)
     if leg == 5:
         xp = inX6.go(x,dt)
         yp = inY6.go(y,dt)
         zp = inZ6.go(z,dt)
         yawp = inYaw6.go(-yaw,dt)
+        pitchp = inPitch6.go(pitch,dt)
+        rollp = inRoll6.go(roll,dt)
 
 
 
@@ -98,7 +122,7 @@ def IK(x,y,z,leg,dt,roll=0.0,pitch=0.0,yaw=0.0,inEn=1):
     yyp = radius*math.sin(demandYaw)
 
     #calc new z based on demand pitch and roll
-    zzp = zp + xxp*math.tan(pitch*math.pi/180.0)+yyp*math.tan(roll*math.pi/180.0)
+    zzp = zp + xxp*math.tan(pitchp*math.pi/180.0)+yyp*math.tan(rollp*math.pi/180.0)
 
     #Transform body to leg coordinate
     xL = xxp*math.cos(rot[leg]) - yyp*math.sin(rot[leg]) - B

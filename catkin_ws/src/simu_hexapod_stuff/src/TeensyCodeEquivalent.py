@@ -4,7 +4,7 @@ from FK import FK03_inbody
 import rospy
 from std_msgs.msg import Float32, Float64, Float64MultiArray
 from my_message.msg import LegPath, thetaMessage
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Vector3
 import time
 
 def millis():
@@ -131,6 +131,13 @@ def modeSelect_cb(msg):
     else:
         mode = msg.data
 rosSubModeSelect = rospy.Subscriber("/mode_selected", Float32,modeSelect_cb)
+
+pitchInput = 0.0
+rollInput = 0.0
+def PitchRollInput_cb(msg):
+    pitchInput = msg.x
+    rollInput = msg.y
+rosSubPitchRollInput = rospy.Subscriber("/RollPitch_input", Vector3,PitchRollInput_cb)
 
 jleg = ['Th1','Th2','Th3']
 leg = ['1','2','3','4','5','6']
