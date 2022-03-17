@@ -36,7 +36,7 @@ def hedge_pos_ang_callback(msg):
     Zpos = msg.z_m
     Ang = msg.angle
     Flag = msg.flags
-    # print(addr, ts, Xpos, Ypos, Zpos, Ang, Flag)
+    #print(addr, ts, Xpos, Ypos, Zpos, Ang, Flag)
 
 def imu_cb(msg):
     global curr_Head_hex,hex_roll,hex_pitch

@@ -1,5 +1,13 @@
 <launch>
 
-    <node pkg = "AnotherHexapod_stuff" type = "PlannerV1.py" name = "planner"> </node>
+    <node pkg = "AnotherHexapod_stuff" type = "PlannerV1.py" name = "planner" output="screen" launch-prefix="gnome-terminal --" > </node>
+
+    <node pkg = "xboxcontrollerpkg" type = "contr.py" name = "XboxController" output="screen" launch-prefix="gnome-terminal --" > </node>
+
+    <arg name = "port" default = "/dev/Arduino_port" />
+    <node pkg = "rosserial_python" type = "serial_node.py" name = "serial_node" output="screen" launch-prefix="gnome-terminal --" > 
+        <param name = "port" value = "$(arg port)" />
+
+    </node>
 
 </launch>
