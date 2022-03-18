@@ -135,6 +135,7 @@ rosSubModeSelect = rospy.Subscriber("/mode_selected", Float32,modeSelect_cb)
 pitchInput = 0.0
 rollInput = 0.0
 def PitchRollInput_cb(msg):
+    global pitchInput,rollInput
     pitchInput = msg.x
     rollInput = msg.y
 rosSubPitchRollInput = rospy.Subscriber("/RollPitch_input", Vector3,PitchRollInput_cb)
@@ -175,7 +176,7 @@ def SetNextPathPoint(XP,YP,ZP,TurnP,d_t):
             z = ZP[i][currentPathPoint[i]]
             yaww = TurnP[currentPathPoint_tw[i%2]]
         
-            (theta1[i],theta2[i],theta3[i]) = IK(x,y,z,i,d_t,0,0,yaww)
+            (theta1[i],theta2[i],theta3[i]) = IK(x,y,z,i,d_t,0,pitchInput,yaww,1)
     
         if(curtime - prevtime >= d_t):
         
@@ -193,13 +194,13 @@ def SetNextPathPoint(XP,YP,ZP,TurnP,d_t):
                 else:
                     currentPathPoint[i] = currentPathPoint[i] + 1
     else:
-        for i in range(6):
-            x = XP[i][currentPathPoint[i]]
-            y = YP[i][currentPathPoint[i]]
-            z = ZP[i][currentPathPoint[i]]
-            yaww = TurnP[currentPathPoint_tw[i%2]]
+        # for i in range(6):
+        #     x = XP[i][currentPathPoint[i]]
+        #     y = YP[i][currentPathPoint[i]]
+        #     z = ZP[i][currentPathPoint[i]]
+        #     yaww = TurnP[currentPathPoint_tw[i%2]]
         
-            (theta1[i],theta2[i],theta3[i]) = IK(x,y,z,i,500,0,0,yaww)
+        #     (theta1[i],theta2[i],theta3[i]) = IK(x,y,z,i,500,0,0,yaww)
         
         for i in range(6):
             currentPathPoint_tw[i%2] = 3

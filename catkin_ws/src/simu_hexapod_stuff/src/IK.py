@@ -45,7 +45,7 @@ inRoll6 = Interpolation(0.0)
 
 
 
-def IK(x,y,z,leg,dt,roll=0.0,pitch=0.0,yaw=0.0,inEn=1):
+def IK(x,y,z,leg,dt,roll=0.0,pitch=0.0,yaw=0.0,RP_inEn=1):
 
     L1x = 53.17
     L1z = 8
@@ -60,43 +60,43 @@ def IK(x,y,z,leg,dt,roll=0.0,pitch=0.0,yaw=0.0,inEn=1):
         yp = inY1.go(y,dt)
         zp = inZ1.go(z,dt)
         yawp = inYaw1.go(yaw,dt)
-        pitchp = inPitch1.go(pitch,dt)
-        rollp = inRoll1.go(roll,dt)
+        pitchp = inPitch1.go(pitch,dt) if RP_inEn == 1 else inPitch1.go(pitch,0) 
+        rollp = inRoll1.go(roll,dt) if RP_inEn == 1 else inRoll1.go(roll,0)
     if leg == 1:
         xp = inX2.go(x,dt)
         yp = inY2.go(y,dt)
         zp = inZ2.go(z,dt)
         yawp = inYaw2.go(-yaw,dt)
-        pitchp = inPitch2.go(pitch,dt)
-        rollp = inRoll2.go(roll,dt)
+        pitchp = inPitch2.go(pitch,dt) if RP_inEn == 1 else inPitch2.go(pitch,0)
+        rollp = inRoll2.go(roll,dt) if RP_inEn == 1 else inRoll2.go(roll,0)
     if leg == 2:
         xp = inX3.go(x,dt)
         yp = inY3.go(y,dt)
         zp = inZ3.go(z,dt)
         yawp = inYaw3.go(yaw,dt)
-        pitchp = inPitch3.go(pitch,dt)
-        rollp = inRoll3.go(roll,dt)
+        pitchp = inPitch3.go(pitch,dt) if RP_inEn == 1 else inPitch3.go(pitch,0) 
+        rollp = inRoll3.go(roll,dt) if RP_inEn == 1 else inRoll3.go(roll,0) 
     if leg == 3:
         xp = inX4.go(x,dt)
         yp = inY4.go(y,dt)
         zp = inZ4.go(z,dt)
         yawp = inYaw4.go(-yaw,dt)
-        pitchp = inPitch4.go(pitch,dt)
-        rollp = inRoll4.go(roll,dt)
+        pitchp = inPitch4.go(pitch,dt) if RP_inEn == 1 else inPitch4.go(pitch,0) 
+        rollp = inRoll4.go(roll,dt) if RP_inEn == 1 else inRoll4.go(roll,0)
     if leg == 4:
         xp = inX5.go(x,dt)
         yp = inY5.go(y,dt)
         zp = inZ5.go(z,dt)
         yawp = inYaw5.go(yaw,dt)
-        pitchp = inPitch5.go(pitch,dt)
-        rollp = inRoll5.go(roll,dt)
+        pitchp = inPitch5.go(pitch,dt) if RP_inEn == 1 else inPitch5.go(pitch,0)
+        rollp = inRoll5.go(roll,dt) if RP_inEn == 1 else inRoll5.go(roll,0)
     if leg == 5:
         xp = inX6.go(x,dt)
         yp = inY6.go(y,dt)
         zp = inZ6.go(z,dt)
         yawp = inYaw6.go(-yaw,dt)
-        pitchp = inPitch6.go(pitch,dt)
-        rollp = inRoll6.go(roll,dt)
+        pitchp = inPitch6.go(pitch,dt) if RP_inEn == 1 else inPitch6.go(pitch,0)
+        rollp = inRoll6.go(roll,dt) if RP_inEn == 1 else inRoll6.go(roll,0)
 
 
 
