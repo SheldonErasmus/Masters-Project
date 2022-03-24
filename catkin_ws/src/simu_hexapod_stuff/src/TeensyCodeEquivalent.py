@@ -176,7 +176,7 @@ def SetNextPathPoint(XP,YP,ZP,TurnP,d_t):
             z = ZP[i][currentPathPoint[i]]
             yaww = TurnP[currentPathPoint_tw[i%2]]
         
-            (theta1[i],theta2[i],theta3[i]) = IK(x,y,z,i,d_t,0,pitchInput,yaww,1)
+            (theta1[i],theta2[i],theta3[i]) = IK(x,y,z,i,d_t,rollInput,0,yaww,0)
     
         if(curtime - prevtime >= d_t):
         

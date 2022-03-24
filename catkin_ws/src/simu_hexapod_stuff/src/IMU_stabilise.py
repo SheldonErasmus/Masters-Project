@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from math import pi
 import rospy
 from hexapodC import HexapodC
 from ToEulerAngles import ToEulerAng
@@ -47,18 +48,18 @@ def imu_cb(msg):
     global measure_roll,measure_pitch,roll_input,pitch_input
     (measure_roll,measure_pitch,yaw) = ToEulerAng(msg.orientation.x,msg.orientation.y,msg.orientation.z,msg.orientation.w)
 
-    roll_input = rollController.PIDUpdate(ref_roll,measure_roll)
-    pitch_input = pitchController.PIDUpdate(ref_pitch,measure_pitch)
+    roll_input = rollController.PIDUpdate(ref_roll,measure_roll*180/pi)
+    pitch_input = pitchController.PIDUpdate(ref_pitch,measure_pitch*180/pi)
 
-    pubRollPitch.publish(x = pitch_input,y=roll_input)
+    pubRollPitch.publish(x = pitch_input,y=-roll_input)
 
     #print(measure_roll,measure_pitch)
     print(roll_input)
 
 if __name__ == '__main__':
 
-    rollController = PIDcontroller(1.1, 0.2, 0.0, 0.02,100)
-    pitchController = PIDcontroller(1.1, 0.2, 0.0, 0.02,100)
+    rollController = PIDcontroller(0, 1/2, 0.0, 0, 1/1)
+    pitchController = PIDcontroller(0, 1/2, 0.0, 0, 1/1)
 
     robot = HexapodC()
 
