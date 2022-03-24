@@ -1,5 +1,5 @@
 from math import pi,sin,cos
-from IK import *
+#from IK import *
 #from FK import *
 import TurnPath
 import WalkPath

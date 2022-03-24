@@ -7,8 +7,5 @@
 # new environment variables
 
 # modified environment variables
-export CMAKE_PREFIX_PATH="/home/sheldon/Meesters/devel:$CMAKE_PREFIX_PATH"
+export LD_LIBRARY_PATH='/home/sheldon/catkin_ws/devel/lib:/opt/ros/melodic/lib'
 export PWD='/home/sheldon/Meesters/build'
-export PYTHONPATH='/opt/ros/melodic/lib/python2.7/dist-packages:/home/sheldon/catkin_ws/devel/lib/python3/dist-packages'
-export ROSLISP_PACKAGE_DIRECTORIES="/home/sheldon/Meesters/devel/share/common-lisp:$ROSLISP_PACKAGE_DIRECTORIES"
-export ROS_PACKAGE_PATH="/home/sheldon/Meesters/src:$ROS_PACKAGE_PATH"

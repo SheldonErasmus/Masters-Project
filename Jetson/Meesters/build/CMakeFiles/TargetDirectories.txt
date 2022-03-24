@@ -35,3 +35,11 @@
 /home/sheldon/Meesters/build/gtest/googlemock/gtest/CMakeFiles/list_install_components.dir
 /home/sheldon/Meesters/build/gtest/googlemock/gtest/CMakeFiles/gtest.dir
 /home/sheldon/Meesters/build/gtest/googlemock/gtest/CMakeFiles/rebuild_cache.dir
+/home/sheldon/Meesters/build/xboxcontrollerpkg/CMakeFiles/install/strip.dir
+/home/sheldon/Meesters/build/xboxcontrollerpkg/CMakeFiles/install/local.dir
+/home/sheldon/Meesters/build/xboxcontrollerpkg/CMakeFiles/test.dir
+/home/sheldon/Meesters/build/xboxcontrollerpkg/CMakeFiles/list_install_components.dir
+/home/sheldon/Meesters/build/xboxcontrollerpkg/CMakeFiles/edit_cache.dir
+/home/sheldon/Meesters/build/xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir
+/home/sheldon/Meesters/build/xboxcontrollerpkg/CMakeFiles/rebuild_cache.dir
+/home/sheldon/Meesters/build/xboxcontrollerpkg/CMakeFiles/install.dir

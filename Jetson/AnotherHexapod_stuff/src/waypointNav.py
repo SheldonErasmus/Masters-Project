@@ -88,7 +88,7 @@ if __name__ == '__main__':
         stepTime = currTime - prevTime
         prevTime = currTime
 
-        robot.set_path_var(p=hex_pitch,r=hex_roll)
+        #robot.set_path_var(p=hex_pitch,r=hex_roll)
 
         if flag == 1:
             ct = array([[cos(Head_t), sin(Head_t)],[-sin(Head_t), cos(Head_t)]]) @ array([[n-Nsrc],[e-Esrc]])
