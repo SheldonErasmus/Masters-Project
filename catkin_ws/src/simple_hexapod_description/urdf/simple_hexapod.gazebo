@@ -61,7 +61,7 @@
     </sensor>
   </gazebo> -->
 
-  <gazebo reference="camera_link">
+  <!-- <gazebo reference="camera_link">
   <sensor name="$camera_link_camera" type="depth">
     <update_rate>30</update_rate>
     <camera>
@@ -101,7 +101,7 @@
       <hackBaseline>0</hackBaseline>
     </plugin>
   </sensor>
-</gazebo>
+</gazebo> -->
 
   <gazebo>
     <plugin filename="libcontroller.so" name="my_controller"/>

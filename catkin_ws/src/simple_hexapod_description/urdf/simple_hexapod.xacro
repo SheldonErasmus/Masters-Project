@@ -574,7 +574,7 @@
 </joint>
 
 <!-- Camera -->
-<link name="camera_link">
+<!-- <link name="camera_link">
   <collision>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
@@ -594,13 +594,20 @@
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
   </inertial>
-</link>
-
-<joint name="camera_joint" type="fixed">
+</link> -->
+<!-- <joint name="camera_joint" type="fixed">
   <axis xyz="0 1 0" />
   <origin xyz="0.06 0 0.2" rpy="0 0 0"/>
   <parent link="base_link"/>
   <child link="camera_link"/>
-</joint>
+</joint> -->
+
+<xacro:include filename="$(find realsense2_description)/urdf/_d435.urdf.xacro" />
+
+<xacro:sensor_d435 name="camera" topics_ns="camera" parent="base_link" publish_pointcloud="true">
+  <origin xyz="0 0 0.3" rpy="0 0.6981 0" />
+</xacro:sensor_d435> 
+
+
 
 </robot>
