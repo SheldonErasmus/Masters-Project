@@ -405,6 +405,56 @@ clean: gtest/googlemock/gtest/CMakeFiles/gtest.dir/clean
 .PHONY : clean
 
 #=============================================================================
+# Directory level rules for directory xboxcontrollerpkg
+
+# Convenience name for "all" pass in the directory.
+xboxcontrollerpkg/all:
+
+.PHONY : xboxcontrollerpkg/all
+
+# Convenience name for "clean" pass in the directory.
+xboxcontrollerpkg/clean: xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/clean
+
+.PHONY : xboxcontrollerpkg/clean
+
+# Convenience name for "preinstall" pass in the directory.
+xboxcontrollerpkg/preinstall:
+
+.PHONY : xboxcontrollerpkg/preinstall
+
+#=============================================================================
+# Target rules for target xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir
+
+# All Build rule for target.
+xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/all:
+	$(MAKE) -f xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/build.make xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/depend
+	$(MAKE) -f xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/build.make xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/sheldon/Meesters/build/CMakeFiles --progress-num= "Built target _catkin_empty_exported_target"
+.PHONY : xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/all
+
+# Build rule for subdir invocation for target.
+xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/sheldon/Meesters/build/CMakeFiles 0
+	$(MAKE) -f CMakeFiles/Makefile2 xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/sheldon/Meesters/build/CMakeFiles 0
+.PHONY : xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/rule
+
+# Convenience name for target.
+_catkin_empty_exported_target: xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/rule
+
+.PHONY : _catkin_empty_exported_target
+
+# clean rule for target.
+xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/clean:
+	$(MAKE) -f xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/build.make xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/clean
+.PHONY : xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/clean
+
+# clean rule for target.
+clean: xboxcontrollerpkg/CMakeFiles/_catkin_empty_exported_target.dir/clean
+
+.PHONY : clean
+
+#=============================================================================
 # Special targets to cleanup operation of make.
 
 # Special rule to run CMake to check the build system integrity.

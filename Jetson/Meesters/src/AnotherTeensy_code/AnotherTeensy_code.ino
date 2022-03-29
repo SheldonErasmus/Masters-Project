@@ -434,7 +434,7 @@ void SetNextPathPoint(float XP[][Pathsize*2-2],float YP[][Pathsize*2-2],float ZP
       z = ZP[i][currentPathPoint[i]];
       yaww = TurnP[currentPathPoint_tw[i%2]];
   
-      InKin.IK(&theta1[i],&theta2[i],&theta3[i],x,y,z,i,d_t,0,0,yaww);
+      InKin.IK(&theta1[i],&theta2[i],&theta3[i],x,y,z,i,d_t,rollInput,pitchInput,yaww);
   
     }
   
@@ -469,15 +469,15 @@ void SetNextPathPoint(float XP[][Pathsize*2-2],float YP[][Pathsize*2-2],float ZP
   }
   else
   {
-    for(int i = 0;i<6;i++)
-    {
-      x = XP[i][currentPathPoint[i]];
-      y = YP[i][currentPathPoint[i]];
-      z = ZP[i][currentPathPoint[i]];
-      yaww = TurnP[currentPathPoint_tw[i%2]];
-  
-      InKin.IK(&theta1[i],&theta2[i],&theta3[i],x,y,z,i,500,0,0,yaww);
-    }
+//    for(int i = 0;i<6;i++)
+//    {
+//      x = XP[i][currentPathPoint[i]];
+//      y = YP[i][currentPathPoint[i]];
+//      z = ZP[i][currentPathPoint[i]];
+//      yaww = TurnP[currentPathPoint_tw[i%2]];
+//  
+//      InKin.IK(&theta1[i],&theta2[i],&theta3[i],x,y,z,i,500,0,0,yaww);
+//    }
     for(int i = 0;i<6;i++)
     {
       currentPathPoint_tw[i%2] = 3;
