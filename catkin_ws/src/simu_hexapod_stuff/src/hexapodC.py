@@ -7,7 +7,7 @@ from my_message.msg import thetaMessage, LegPath, PathVar_n_cmdVel
 class HexapodC:
 
     x = 0.0; y = 0.0; t = 0.0
-    BH = 140.0; Ss = 100.0; Sh = 50.0; Rd = 283.71; p=0.0; r=0.0
+    BH = 140.0; Ss = 100.0; Sh = [50.0, 50.0, 50.0, 50.0, 50.0, 50.0]; Rd = 283.71; p=0.0; r=0.0
 
     def __init__(self, ns='/simple_hexapod/'):
         self.ns = ns
@@ -54,7 +54,7 @@ class HexapodC:
         msg.path_var.r = HexapodC.r
         self._pub_cmd_vel_path_var.publish(msg)
 
-    def set_path_var(self,BH = 140.0, Ss = 100.0, Sh = 50.0, Rd = 283.71, p=0.0, r=0.0):
+    def set_path_var(self,BH = 140.0, Ss = 100.0, Sh = [50.0, 50.0, 50.0, 50.0, 50.0, 50.0], Rd = 283.71, p=0.0, r=0.0):
         HexapodC.BH = BH
         HexapodC.Ss = Ss
         HexapodC.Sh = Sh

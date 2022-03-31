@@ -7,6 +7,8 @@ from sensor_msgs.msg import CameraInfo
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import pyrealsense2 as rs2
+from hexapodC import HexapodC
+from my_message.msg import PathVar_n_cmdVel
 
 class ImageListener:
     def __init__(self, topic):
@@ -49,7 +51,12 @@ if __name__ == '__main__':
     rospy.init_node("Camera_terrain_adaptation")
     topic = '/camera/depth/image_raw'
     listener = ImageListener(topic)
+    pub = rospy.Publisher('/simple_hexapod/changed_vel_path_var', PathVar_n_cmdVel, queue_size=1)
     rospy.sleep(1)
+
+    msg = PathVar_n_cmdVel()
+
+    robot = HexapodC()
     
     H = 300 #height of cam
     L = 0 #X offset of cam
@@ -97,3 +104,7 @@ if __name__ == '__main__':
             TransZ = None
         
         print([zmax,TransZ])
+
+        msg.path_var.Sh = [100, 50, 50, 50, 50, 50]
+        msg.Name = 'Camera'
+        pub.publish(msg)

@@ -3,6 +3,7 @@ from xbox360controller import Xbox360Controller
 import rospy
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32
+from my_message.msg import PathVar_n_cmdVel
 
 import sys
 sys.path.append("/home/devlon/catkin_ws/src/simu_hexapod_stuff/src")
@@ -14,15 +15,22 @@ start = 0
 axX =0.0; axY = 0.0; flag_Lstick = 0
 vx = 0.0; vy = 0.0; totV = 0.0
 
+robot = HexapodC()
+rospy.sleep(1)
+
+bh = HexapodC.BH; turnAng = 0.0; StepH = HexapodC.Sh
+
+def vel_path_cb(msg):
+    global StepH
+    if msg.Name == 'Camera':
+        StepH = msg.path_var.Sh
+
 rospy.init_node('XboxController')
 
 teleop_pub = rospy.Publisher('/cmd_vel',Twist,queue_size=1)
 mode_pub = rospy.Publisher('/mode_selected',Float32,queue_size=1)
 
-robot = HexapodC()
-rospy.sleep(1)
-
-bh = HexapodC.BH; turnAng = 0.0
+rospy.Subscriber('/simple_hexapod/changed_vel_path_var',PathVar_n_cmdVel,vel_path_cb,queue_size=1)
 
 def _map(x, in_min, in_max, out_min, out_max):
     return float((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
@@ -284,6 +292,7 @@ try:
                             totV = (vx**2+vy**2)**(1/2)
                             print('vx: {0} vy: {1} V: {2}'.format(vx, vy, totV))
                             robot.set_walk_velocity(vx,vy,0)
+                            robot.set_path_var(Sh = StepH)
 
             rospy.sleep(0.01)
 except KeyboardInterrupt:

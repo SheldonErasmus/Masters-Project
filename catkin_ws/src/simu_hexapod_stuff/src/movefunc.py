@@ -34,11 +34,12 @@ class MoveFunc:
         return XL,YL
 
     def makepath_walk(self,Ss,Sh,Rd,p,r,di,BH,tf = 2,pathsize = 7):
-        WP = WalkPath.WalkPath(Rd,di,Ss,Sh,BH,self.rot[0],p,r)
+        WP = WalkPath.WalkPath(Rd,di,Ss,Sh[0],BH,self.rot[0],p,r)
         xp = zeros((6,7*2-2)); yp = zeros((6,7*2-2)); zp = zeros((6,7*2-2))
         xp_d = zeros((6,7*2-2)); yp_d = zeros((6,7*2-2)); zp_d = zeros((6,7*2-2))
         for i in range(6):
             WP.rot = self.rot[i]
+            WP.Sh = Sh[i]
             (xp[i,],yp[i,],zp[i,],xp_d[i,],yp_d[i,],zp_d[i,]) = WP.MakePath(tf,pathsize)
         
         return xp,yp,zp,xp_d,yp_d,zp_d
