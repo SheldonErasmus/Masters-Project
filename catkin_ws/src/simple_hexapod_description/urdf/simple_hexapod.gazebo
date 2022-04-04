@@ -111,7 +111,7 @@
     <plugin name="gps_controller" filename="libhector_gazebo_ros_gps.so">
         <robotNamespace>/simple_hexapod</robotNamespace>
         <alwayson>true</alwayson>
-        <updaterate>1.0</updaterate>
+        <updaterate>16.0</updaterate>
         <bodyname>base_link</bodyname>
         <topicname>/fix</topicname>
         <velocitytopicname>/fix_velocity</velocitytopicname>
@@ -127,7 +127,7 @@
       <robotNamespace>/simple_hexapod</robotNamespace>
       <alwayson>true</alwayson>
       <serviceName>/imu/calibrate</serviceName>
-      <updateRate>1.0</updateRate>
+      <updateRate>100.0</updateRate>
       <bodyName>base_link</bodyName>
       <topicName>imu</topicName>
       <rpyOffset>0 0 0</rpyOffset>

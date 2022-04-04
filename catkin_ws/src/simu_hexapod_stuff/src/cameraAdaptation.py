@@ -3,7 +3,8 @@
 import numpy as np
 import rospy
 from sensor_msgs.msg import Image as msg_Image
-from sensor_msgs.msg import CameraInfo
+from sensor_msgs.msg import CameraInfo, NavSatFix
+from wgs2ned import WGS2NED
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import pyrealsense2 as rs2
@@ -47,11 +48,29 @@ class ImageListener:
             print(e)
             return
 
+startupFlag = 1
+n = 0.0
+e = 0.0
+d = 0.0
+
+def nav_cb(msg):
+    global startupFlag, refLat, refLon, refAlt, n, e, d
+    if startupFlag:
+        startupFlag = 0
+        refLat = msg.latitude
+        refLon = msg.longitude
+        refAlt = msg.altitude
+    Lat = msg.latitude
+    Lon = msg.longitude
+    Alt = msg.altitude
+    (n,e,d) = WGS2NED(refLat,refLon,refAlt,Lat,Lon,Alt)
+
 if __name__ == '__main__':
     rospy.init_node("Camera_terrain_adaptation")
     topic = '/camera/depth/image_raw'
     listener = ImageListener(topic)
     pub = rospy.Publisher('/simple_hexapod/changed_vel_path_var', PathVar_n_cmdVel, queue_size=1)
+    subGPS = rospy.Subscriber("/simple_hexapod/fix", NavSatFix, nav_cb, queue_size=1)
     rospy.sleep(1)
 
     msg = PathVar_n_cmdVel()
@@ -62,48 +81,53 @@ if __name__ == '__main__':
     L = 0 #X offset of cam
     CA = 40 #cam angle
     LI = 17.5 #Left imager offset
-    FootXPos = 400
-    FootYPos = 0
+    FootXPos = np.array([400,400,400,600,600,600])
+    FootYPos = np.array([0,125,-125,0,125,-125])
 
     HL = np.sqrt(H**2+L**2) #slope of offsets
     AngHL = np.arctan2(H,L) #Angle of offsets
 
     while not rospy.is_shutdown():
         
-        flag = 0
-        zmax = 0
-        jmin = 99999
+        flag = [0,0,0,0,0,0]
+        zmax = [0,0,0,0,0,0]
+        jmin = [99999,99999,99999,99999,99999,99999]
+        TransZ = [0,0,0,0,0,0]
 
         yc = [None for i in range(1000+1)]
         zc = [None for i in range(1000+1)]
 
+        i = 0
         for h in range(-200,800+1):
-            yc[h] = (np.cos((90+CA)*np.pi/180)*FootXPos - np.sin((90+CA)*np.pi/180)*h + HL*np.sin(AngHL+CA*np.pi/180))
-            zc[h] = (np.sin((90+CA)*np.pi/180)*FootXPos + np.cos((90+CA)*np.pi/180)*h - HL*np.cos(AngHL+CA*np.pi/180))
+            yc[i] = (np.cos((90+CA)*np.pi/180)*FootXPos - np.sin((90+CA)*np.pi/180)*h + HL*np.sin(AngHL+CA*np.pi/180))
+            zc[i] = (np.sin((90+CA)*np.pi/180)*FootXPos + np.cos((90+CA)*np.pi/180)*h - HL*np.cos(AngHL+CA*np.pi/180))
+            i = i + 1
 
         xc = -FootYPos + LI
 
-        for i,j in zip(yc,zc):
-            if listener.intrinsics:
-                Pixels = rs2.rs2_project_point_to_pixel(listener.intrinsics,[xc,i,j])
-                Pixels[0] = 0 if Pixels[0] < 0 else (listener.intrinsics.width-1 if Pixels[0] >= listener.intrinsics.width else Pixels[0])
-                Pixels[1] = 0 if Pixels[1] < 0 else (listener.intrinsics.height-1 if Pixels[1] >= listener.intrinsics.height else Pixels[1])
-                depth = listener.cv_image[round(Pixels[1]),round(Pixels[0])] 
+        for k in range(0,6):
+            for i,j in zip(yc,zc):
+                if listener.intrinsics:
+                    Pixels = rs2.rs2_project_point_to_pixel(listener.intrinsics,[xc[k],i[k],j[k]])
+                    Pixels[0] = 0 if Pixels[0] < 0 else (listener.intrinsics.width-1 if Pixels[0] >= listener.intrinsics.width else Pixels[0])
+                    Pixels[1] = 0 if Pixels[1] < 0 else (listener.intrinsics.height-1 if Pixels[1] >= listener.intrinsics.height else Pixels[1])
+                    depth = listener.cv_image[round(Pixels[1]),round(Pixels[0])] 
 
-                if abs((depth-j)/depth) < 0.02:
-                    flag = 1
-                    z = depth 
+                    if abs((depth-j[k])/depth) < 0.02:
+                        flag[k] = 1
+                        z = depth 
 
-                    if j < jmin:
-                        jmin = j
-                        zmax = z
-                        TransZ = np.sin((-90-CA)*np.pi/180)*i + np.cos((-90-CA)*np.pi/180)*j + HL*np.sin(AngHL)
+                        if j[k] < jmin[k]:
+                            jmin[k] = j[k]
+                            zmax[k] = z
+                            TransZ[k] = round(np.sin((-90-CA)*np.pi/180)*i[k] + np.cos((-90-CA)*np.pi/180)*j[k] + HL*np.sin(AngHL))
                     
-        if flag == 0:
-            zmax = None
-            TransZ = None
+            if flag[k] == 0:
+                zmax[k] = None
+                TransZ[k]= None
         
-        print([zmax,TransZ])
+        #print([zmax,TransZ])
+        print(TransZ)
 
         msg.path_var.Sh = [100, 50, 50, 50, 50, 50]
         msg.Name = 'Camera'
