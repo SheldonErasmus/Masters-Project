@@ -49,11 +49,11 @@ class StepProfile:
 
 
 
-trap = StepProfile(0.1)
-trap.GenerateProfile(0,10,50)
+# trap = StepProfile(0.1)
+# trap.GenerateProfile(0,10,50)
 
-tpoints = np.linspace(0,trap.time,1000)
-fpoints = [trap.F(val) for val in tpoints]
-plt.plot(tpoints,fpoints)
-plt.show()
+# tpoints = np.linspace(0,trap.time,1000)
+# fpoints = [trap.F(val) for val in tpoints]
+# plt.plot(tpoints,fpoints)
+# plt.show()
 

@@ -9,7 +9,7 @@ import sys
 sys.path.append("/home/devlon/catkin_ws/src/simu_hexapod_stuff/src")
 from hexapodC import HexapodC
 
-flag_a = 0; flag_y = 0; flag_x = 0; flag_b = 0; flag_LB = 0; flag_RB = 0;flag_cam=0
+flag_a = 0; flag_y = 0; flag_x = 0; flag_b = 0; flag_LB = 0; flag_RB = 0;flag_cam=0;flag_way=0
 mode = 0; mode_selected = -1
 start = 0
 axX =0.0; axY = 0.0; flag_Lstick = 0
@@ -19,13 +19,20 @@ robot = HexapodC()
 rospy.sleep(1)
 
 bh = HexapodC.BH; turnAng = 0.0; FootH = HexapodC.Fh; StepH = HexapodC.Sh
+vx_way = 0; vy_way = 0;z_way = 0
 
 def vel_path_cb(msg):
-    global FootH,StepH,flag_cam
+    global FootH,StepH,flag_cam,vx_way,z_way,flag_way
     if msg.Name == 'Camera':
         flag_cam = 1
         FootH = msg.path_var.Fh
         StepH = msg.path_var.Sh
+    if msg.Name == 'Waypoint':
+        flag_way = 1
+        vx_way = msg.linear.x
+        z_way = msg.angular.z
+
+
 
 rospy.init_node('XboxController')
 
@@ -298,6 +305,10 @@ try:
                     if flag_cam == 1:
                         robot.set_path_var(Sh = StepH, Fh = FootH)
                         flag_cam = 0
+
+                    if flag_way == 1:
+                        flag_way = 0
+                        robot.set_walk_velocity(vx_way,vy_way,z_way)
 
             rospy.sleep(0.01)
 except KeyboardInterrupt:
