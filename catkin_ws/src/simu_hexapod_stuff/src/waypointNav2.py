@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     robot = HexapodC()
     #trapez = TrapezoidalProfile() #11Nov
-    stepP = StepProfile(0.1) #Added 26Jan
+    stepP = StepProfile(0.1,150) #Added 26Jan
     
     model_coordinates = rospy.ServiceProxy( '/gazebo/get_model_state', GetModelState)
     subGPS = rospy.Subscriber(robot.ns + "fix", NavSatFix, nav_cb, queue_size=1)
@@ -88,7 +88,7 @@ if __name__ == '__main__':
     startPos = ct[0] #11Nov
 
     #trapez.GenerateProfile(startPos,L_t,150) #11Nov
-    stepP.GenerateProfile(startPos,L_t,150) #Added 26Jan
+    #stepP.GenerateProfile(startPos,L_t,0) #Added 26Jan
     TrapezstartTime = time.time() #11Nov
 
     while not rospy.is_shutdown():
@@ -111,7 +111,7 @@ if __name__ == '__main__':
             Head_command = -(Head_ref - curr_Head_hex)
 
             #xdot = trapez.F(time.time()-TrapezstartTime) #11Nov
-            stepP.GenerateProfile(ct_dist,L_t,150-(time.time()-TrapezstartTime)) #Added 26Jan
+            stepP.GenerateProfile(ct_dist,L_t,(time.time()-TrapezstartTime)) #Added 26Jan
             xdot = stepP.F(time.time()-TrapezstartTime) #Added 26Jan
             V_hexTot = xdot #11Nov
 
@@ -144,19 +144,22 @@ if __name__ == '__main__':
 
             if abs(Head_t - curr_Head_hex) > 0.01:
                 if abs((Head_t - curr_Head_hex)*180/pi) >= 15:
-                    robot.set_walk_velocity(0.0,0,copysign(15,-(Head_t - curr_Head_hex)))
+                    PathVelmsg.linear.x=0; PathVelmsg.angular.z=copysign(15,-(Head_t - curr_Head_hex))
+                    pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,copysign(15,-(Head_t - curr_Head_hex)))
                 else:
-                    robot.set_walk_velocity(0.0,0,-(Head_t - curr_Head_hex)*180/pi)
+                    PathVelmsg.linear.x=0; PathVelmsg.angular.z=-(Head_t - curr_Head_hex)*180/pi
+                    pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,-(Head_t - curr_Head_hex)*180/pi)
             else:
-                robot.set_walk_velocity(0.0,0,0)
+                PathVelmsg.linear.x=0; PathVelmsg.angular.z=0
+                pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,0)
                 L_t = sqrt((Ndest-Nsrc)**2+(Edest-Esrc)**2)
                 flag = 1
 
-                ct = array([[cos(Head_t), sin(Head_t)],[-sin(Head_t), cos(Head_t)]]) @ array([[n-Nsrc],[e-Esrc]])
-                startPos = ct[0] #11Nov
+                # ct = array([[cos(Head_t), sin(Head_t)],[-sin(Head_t), cos(Head_t)]]) @ array([[n-Nsrc],[e-Esrc]])
+                # startPos = ct[0] #11Nov
 
                 # trapez.GenerateProfile(startPos,L_t,150) #11Nov
-                stepP.GenerateProfile(startPos,L_t,150) #Added 26Jan
+                # stepP.GenerateProfile(startPos,L_t,150) #Added 26Jan
                 TrapezstartTime = time.time() #11Nov
 
         rospy.sleep(0.1) 

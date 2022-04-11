@@ -26,21 +26,21 @@ class TrapezoidalProfile:
         self.F = lambda t: 0 if t<=0 else (Vmax/t_acc*t if t>0 and t<t_acc else (Vmax if t>=t_acc and t<=t_acc+t_vel else (-Vmax/t_dec*t + Vmax*self.time/t_dec if t>t_acc+t_vel and t<=t_acc+t_dec+t_vel else 0)))
 
 class StepProfile:
-    def __init__(self,Vmax):
+    def __init__(self,Vmax,time):
         self.Vmax = Vmax
+        self.Tot_time = time
 
-    def GenerateProfile(self,start_pos,end_pos,time = None):
-        Tot_distance = end_pos - start_pos
-        self.time = time
-
-        Vtop = Tot_distance/self.time
+    def GenerateProfile(self,cur_pos,end_pos,cur_time = None):
+        Tot_distance = end_pos - cur_pos
+        Remain_time = self.Tot_time-cur_time
+        Vtop = Tot_distance/Remain_time
 
         if Vtop > self.Vmax:
-            self.time = Tot_distance/self.Vmax
+            Remain_time = Tot_distance/self.Vmax
             Vtop = self.Vmax
-            print('Velocity can not exceed {}, now using {} as total time' .format(self.Vmax,self.time))
+            print('Velocity can not exceed {}, now using {} as total time' .format(self.Vmax,Remain_time))
 
-        self.F = lambda t: 0 if t<0 else (Vtop if t>=0 and t<= self.time else 0)
+        self.F = lambda t: 0 if t<0 else (Vtop if t>=0 and t<= cur_time+Remain_time else 0)
     
             
 

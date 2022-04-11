@@ -50,6 +50,7 @@ find_package(catkin REQUIRED roscpp rospy std_msgs geometry_msgs message_generat
    thetaMessage.msg
    PathVariables.msg
    PathVar_n_cmdVel.msg
+   WorldFeetPlace.msg
 #   Message1.msg
 #   Message2.msg
  )

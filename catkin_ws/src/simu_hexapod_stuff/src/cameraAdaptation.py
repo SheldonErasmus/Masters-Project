@@ -10,7 +10,7 @@ import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import pyrealsense2 as rs2
 from hexapodC import HexapodC
-from my_message.msg import PathVar_n_cmdVel
+from my_message.msg import PathVar_n_cmdVel, WorldFeetPlace
 
 class ImageListener:
     def __init__(self, topic):
@@ -70,6 +70,13 @@ def imu_cb(msg):
     global roll,pitch,yaw
     (roll,pitch,yaw) = ToEulerAng(msg.orientation.x,msg.orientation.y,msg.orientation.z,msg.orientation.w)
 
+FeetPlaceXBuffer = np.empty((2,6))
+FeetPlaceYBuffer = np.empty((2,6))
+def FeetPlace_cb(msg):
+    global FeetPlaceXBuffer, FeetPlaceYBuffer
+    FeetPlaceXBuffer = msg.XPlace
+    FeetPlaceXBuffer = msg.YPlace
+
 if __name__ == '__main__':
     rospy.init_node("Camera_terrain_adaptation")
     topic = '/camera/depth/image_raw'
@@ -77,6 +84,7 @@ if __name__ == '__main__':
     pub = rospy.Publisher('/simple_hexapod/changed_vel_path_var', PathVar_n_cmdVel, queue_size=1)
     subGPS = rospy.Subscriber("/simple_hexapod/fix", NavSatFix, nav_cb, queue_size=1)
     subIMU = rospy.Subscriber("/simple_hexapod/imu", Imu, imu_cb, queue_size=1)
+    subWorldFeetPos = rospy.Subscriber("WorldFeetPlace", WorldFeetPlace, FeetPlace_cb)
     rospy.sleep(1)
 
     msg = PathVar_n_cmdVel()
