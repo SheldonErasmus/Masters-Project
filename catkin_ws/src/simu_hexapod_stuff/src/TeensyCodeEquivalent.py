@@ -152,6 +152,8 @@ for j in joints:
     pub = rospy.Publisher('/simple_hexapod/'+j+'_position_controller/command',Float64MultiArray,queue_size=1)
     pub_angles[j] = pub 
 
+FeetOnFloorFlag = rospy.Publisher("/FeetOnFloorFlag",Float32,queue_size=1)
+
 currentmillis = 0
 prevmillis = millis()
 
@@ -193,6 +195,9 @@ def SetNextPathPoint(XP,YP,ZP,TurnP,d_t):
                     currentPathPoint[i] = 0
                 else:
                     currentPathPoint[i] = currentPathPoint[i] + 1
+
+            if currentPathPoint[0] == 7 or currentPathPoint[1] == 7:
+                FeetOnFloorFlag.publish(data = 1)
     else:
         # for i in range(6):
         #     x = XP[i][currentPathPoint[i]]

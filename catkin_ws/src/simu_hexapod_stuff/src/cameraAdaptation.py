@@ -20,14 +20,17 @@ class ImageListener:
         self.sub_info = rospy.Subscriber('/camera/depth/camera_info', CameraInfo, self.imageDepthInfoCallback)
         self.intrinsics = None
         self.SomeTable = {}
+        self.flag = 1
 
     def imageDepthCallback(self, data):
-        try:
-            self.cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
-            self.SomeTable = {}
-        except CvBridgeError as e:
-            print(e)
-            return
+        if self.flag == 1:
+            self.flag = 0    
+            try:
+                self.cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
+                self.SomeTable = {}
+            except CvBridgeError as e:
+                print(e)
+                return
 
     def imageDepthInfoCallback(self, cameraInfo):
         try:
