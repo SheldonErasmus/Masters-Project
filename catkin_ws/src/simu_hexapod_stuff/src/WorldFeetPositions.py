@@ -1,7 +1,8 @@
 from numpy import sqrt, pi,arctan2,sin,cos
 import rospy
 from hexapodC import HexapodC
-from sensor_msgs.msg import NavSatFix
+from sensor_msgs.msg import NavSatFix, Imu
+from ToEulerAngles import ToEulerAng
 from wgs2ned import WGS2NED
 from gazebo_msgs.srv import SpawnModel, DeleteModel, GetModelState
 from geometry_msgs.msg import Pose, Point
@@ -54,7 +55,7 @@ def path_cb(msg):
         YPath[i][1] = radius*sin(demandYaw)
 
     StepS_x = round(abs(XPath[0][1]-XPath[0][0])/1000,3)
-    StepS_y = round((-YPath[0][1]+YPath[0][0])/1000,3)
+    StepS_y = round((YPath[0][1]-YPath[0][0])/1000,3)
 
 
 startupFlag = 1
@@ -85,6 +86,11 @@ def FeetOnFloor_cb(msg):
     global FeetOnFloorFlag
     FeetOnFloorFlag = FeetOnFloorFlag + msg.data
 
+roll=0;pitch=0;yaw=0
+def imu_cb(msg):
+    global roll,pitch,yaw
+    (roll,pitch,yaw) = ToEulerAng(msg.orientation.x,msg.orientation.y,msg.orientation.z,msg.orientation.w)
+
 if __name__ == '__main__':
 
     rospy.init_node("WorldFootPos")
@@ -93,6 +99,7 @@ if __name__ == '__main__':
 
     sub_path = rospy.Subscriber('/simple_hexapod/Legs_paths', LegPath, path_cb)
     subGPS = rospy.Subscriber("/simple_hexapod/fix", NavSatFix, nav_cb, queue_size=1)
+    subIMU = rospy.Subscriber("/simple_hexapod/imu", Imu, imu_cb, queue_size=1)
     FeetOnFloorFlag_sub = rospy.Subscriber("/FeetOnFloorFlag",Float32, FeetOnFloor_cb)
     pubFeetPlace = rospy.Publisher("WorldFeetPlace", WorldFeetPlace, queue_size=1)
 
@@ -118,15 +125,15 @@ if __name__ == '__main__':
         k = StepS_x/2 if i == 1 else StepS_x
         BCP_x = l + k
 
-        l = e if i == 1 else BCP_y
+        l = -e if i == 1 else BCP_y
         k = StepS_y/2 if i == 1 else StepS_y
         BCP_y = l + k
 
         # spawn_model_client(model_name='BCP'+str(i),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='/BCP'+str(i),initial_pose=Pose(position=Point(BCP_x,BCP_y,0)),reference_frame='world')
         
         for j in [0,2,4]:
-            FP_x = XPath[j][1]/1000 + BCP_x
-            FP_y = -YPath[j][1]/1000 + BCP_y
+            FP_x = (XPath[j][1]/1000)*cos(yaw) - (YPath[j][1]/1000)*sin(yaw) + BCP_x
+            FP_y = (XPath[j][1]/1000)*sin(yaw) + (YPath[j][1]/1000)*cos(yaw) + BCP_y
             spawn_model_client(model_name='F'+str(j+1)+'P'+str(i),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='F'+str(j)+'P'+str(i),initial_pose=Pose(position=Point(FP_x,-FP_y,0)),reference_frame='world')
             FeetPlace.XPlace[j] = FP_x
             FeetPlace.YPlace[j] = FP_y
@@ -137,8 +144,8 @@ if __name__ == '__main__':
         # spawn_model_client(model_name='BC1P'+str(i),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='/BCP'+str(i),initial_pose=Pose(position=Point(BCP_x,BCP_y,0)),reference_frame='world')
 
         for j in [1,3,5]:
-            FP_x = XPath[j][1]/1000 + BCP_x
-            FP_y = -YPath[j][1]/1000 + BCP_y
+            FP_x = (XPath[j][1]/1000)*cos(yaw) - (YPath[j][1]/1000)*sin(yaw) + BCP_x
+            FP_y = (XPath[j][1]/1000)*sin(yaw) + (YPath[j][1]/1000)*cos(yaw) + BCP_y
             spawn_model_client(model_name='F'+str(j+1)+'P'+str(i),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='F'+str(j)+'P'+str(i),initial_pose=Pose(position=Point(FP_x,-FP_y,0)),reference_frame='world')
             FeetPlace.XPlace[j] = FP_x
             FeetPlace.YPlace[j] = FP_y
@@ -167,8 +174,8 @@ if __name__ == '__main__':
             # spawn_model_client(model_name='BCP'+str(i),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='/BCP'+str(i),initial_pose=Pose(position=Point(BCP_x,BCP_y,0)),reference_frame='world')
         
             for j in [0,2,4]:
-                FP_x = XPath[j][1]/1000 + BCP_x
-                FP_y = -YPath[j][1]/1000 + BCP_y
+                FP_x = (XPath[j][1]/1000)*cos(yaw) - (YPath[j][1]/1000)*sin(yaw) + BCP_x
+                FP_y = (XPath[j][1]/1000)*sin(yaw) + (YPath[j][1]/1000)*cos(yaw) + BCP_y    
                 spawn_model_client(model_name='F'+str(j+1)+'P'+str(num),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='F'+str(j)+'P'+str(num),initial_pose=Pose(position=Point(FP_x,-FP_y,0)),reference_frame='world')
                 FeetPlace.XPlace[j] = FP_x
                 FeetPlace.YPlace[j] = FP_y
@@ -179,8 +186,8 @@ if __name__ == '__main__':
             # spawn_model_client(model_name='BC1P'+str(i),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='/BCP'+str(i),initial_pose=Pose(position=Point(BCP_x,BCP_y,0)),reference_frame='world')
 
             for j in [1,3,5]:
-                FP_x = XPath[j][1]/1000 + BCP_x
-                FP_y = -YPath[j][1]/1000 + BCP_y
+                FP_x = (XPath[j][1]/1000)*cos(yaw) - (YPath[j][1]/1000)*sin(yaw) + BCP_x
+                FP_y = (XPath[j][1]/1000)*sin(yaw) + (YPath[j][1]/1000)*cos(yaw) + BCP_y 
                 spawn_model_client(model_name='F'+str(j+1)+'P'+str(num),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='F'+str(j)+'P'+str(num),initial_pose=Pose(position=Point(FP_x,-FP_y,0)),reference_frame='world')
                 FeetPlace.XPlace[j] = FP_x
                 FeetPlace.YPlace[j] = FP_y
@@ -217,8 +224,8 @@ if __name__ == '__main__':
                 # spawn_model_client(model_name='BCP'+str(i),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='/BCP'+str(i),initial_pose=Pose(position=Point(BCP_x,BCP_y,0)),reference_frame='world')
             
                 for j in [0,2,4]:
-                    FP_x = XPath[j][1]/1000 + BCP_x
-                    FP_y = -YPath[j][1]/1000 + BCP_y
+                    FP_x = (XPath[j][1]/1000)*cos(yaw) - (YPath[j][1]/1000)*sin(yaw) + BCP_x
+                    FP_y = (XPath[j][1]/1000)*sin(yaw) + (YPath[j][1]/1000)*cos(yaw) + BCP_y 
                     spawn_model_client(model_name='F'+str(j+1)+'P'+str(m),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='F'+str(j)+'P'+str(m),initial_pose=Pose(position=Point(FP_x,-FP_y,0)),reference_frame='world')
                     FeetPlace.XPlace[j] = FP_x
                     FeetPlace.YPlace[j] = FP_y
@@ -229,8 +236,8 @@ if __name__ == '__main__':
                 # spawn_model_client(model_name='BC1P'+str(i),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='/BCP'+str(i),initial_pose=Pose(position=Point(BCP_x,BCP_y,0)),reference_frame='world')
 
                 for j in [1,3,5]:
-                    FP_x = XPath[j][1]/1000 + BCP_x
-                    FP_y = -YPath[j][1]/1000 + BCP_y
+                    FP_x = (XPath[j][1]/1000)*cos(yaw) - (YPath[j][1]/1000)*sin(yaw) + BCP_x
+                    FP_y = (XPath[j][1]/1000)*sin(yaw) + (YPath[j][1]/1000)*cos(yaw) + BCP_y 
                     spawn_model_client(model_name='F'+str(j+1)+'P'+str(m),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='F'+str(j)+'P'+str(m),initial_pose=Pose(position=Point(FP_x,-FP_y,0)),reference_frame='world')
                     FeetPlace.XPlace[j] = FP_x
                     FeetPlace.YPlace[j] = FP_y

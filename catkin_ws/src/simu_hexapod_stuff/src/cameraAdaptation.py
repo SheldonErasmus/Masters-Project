@@ -106,8 +106,8 @@ if __name__ == '__main__':
 
         FootXPos_world = np.array([450,450,450,600,600,600])
         FootYPos_world = np.array([0,125,-125,0,125,-125])
-        FootXPos = FootXPos_world*np.cos(-yaw) - FootYPos_world*np.sin(-yaw) - n*1000
-        FootYPos = FootXPos_world*np.sin(-yaw) + FootYPos_world*np.cos(-yaw) + e*1000
+        FootXPos = FootXPos_world*np.cos(-yaw) - FootYPos_world*np.sin(-yaw) - np.cos(np.arctan2(-e*1000,n*1000)-yaw)*np.sqrt((n*1000)**2+(e*1000)**2)
+        FootYPos = FootXPos_world*np.sin(-yaw) + FootYPos_world*np.cos(-yaw) - np.sin(np.arctan2(-e*1000,n*1000)-yaw)*np.sqrt((n*1000)**2+(e*1000)**2)
         
         flag = [0,0,0,0,0,0]
         zmax = [0,0,0,0,0,0]
