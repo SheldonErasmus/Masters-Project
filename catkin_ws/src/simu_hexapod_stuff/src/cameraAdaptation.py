@@ -11,6 +11,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import pyrealsense2 as rs2
 from hexapodC import HexapodC
 from my_message.msg import PathVar_n_cmdVel, WorldFeetPlace
+from std_msgs.msg import Float32
 
 class ImageListener:
     def __init__(self, topic):
@@ -19,14 +20,22 @@ class ImageListener:
         self.sub = rospy.Subscriber(topic, msg_Image, self.imageDepthCallback)
         self.sub_info = rospy.Subscriber('/camera/depth/camera_info', CameraInfo, self.imageDepthInfoCallback)
         self.intrinsics = None
+        self.cv_image = [np.zeros((720,1280)) for i in range(4)]
+        self.flag = 0
+
+        pose = {"x":0,"y":0, "z":0,"yaw":0}
+        self.image_pose = [pose for i in range(4)]
+
         self.SomeTable = {}
-        self.flag = 1
 
     def imageDepthCallback(self, data):
         if self.flag == 1:
-            self.flag = 0    
+            self.flag = 0 
             try:
-                self.cv_image = self.bridge.imgmsg_to_cv2(data, data.encoding)
+                temp = [self.bridge.imgmsg_to_cv2(data, data.encoding)]
+                self.cv_image = np.concatenate((self.cv_image[1:4],temp))
+                pose = [{"x":n,"y":-e, "z":-d,"yaw":yaw}]
+                self.image_pose = np.concatenate((self.image_pose[1:4],pose))
                 self.SomeTable = {}
             except CvBridgeError as e:
                 print(e)
@@ -80,6 +89,10 @@ def FeetPlace_cb(msg):
     FeetPlaceXBuffer = msg.XPlace
     FeetPlaceXBuffer = msg.YPlace
 
+def FeetOnFloor_cb(msg):
+    listener.flag = 1
+
+
 if __name__ == '__main__':
     rospy.init_node("Camera_terrain_adaptation")
     topic = '/camera/depth/image_raw'
@@ -88,6 +101,7 @@ if __name__ == '__main__':
     subGPS = rospy.Subscriber("/simple_hexapod/fix", NavSatFix, nav_cb, queue_size=1)
     subIMU = rospy.Subscriber("/simple_hexapod/imu", Imu, imu_cb, queue_size=1)
     subWorldFeetPos = rospy.Subscriber("WorldFeetPlace", WorldFeetPlace, FeetPlace_cb)
+    FeetOnFloorFlag_sub = rospy.Subscriber("/FeetOnFloorFlag",Float32, FeetOnFloor_cb)
     rospy.sleep(1)
 
     msg = PathVar_n_cmdVel()
@@ -163,3 +177,4 @@ if __name__ == '__main__':
         msg.path_var.Fh = [0, 0, 0, 0, 0, 0]
         msg.Name = 'Camera'
         pub.publish(msg)
+        
