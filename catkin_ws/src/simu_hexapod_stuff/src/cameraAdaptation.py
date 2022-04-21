@@ -21,11 +21,11 @@ class ImageListener:
         self.sub = rospy.Subscriber(topic, msg_Image, self.imageDepthCallback)
         self.sub_info = rospy.Subscriber('/camera/depth/camera_info', CameraInfo, self.imageDepthInfoCallback)
         self.intrinsics = None
-        self.cv_image = [np.ones((720,1280)) for i in range(4)]
+        self.cv_image = [np.ones((720,1280)) for i in range(5)]
         self.flag = 0
 
         pose = {"x":0,"y":0, "z":0,"yaw":0}
-        self.image_pose = [pose for i in range(4)]
+        self.image_pose = [pose for i in range(5)]
 
         self.SomeTable = {}
 
@@ -34,9 +34,9 @@ class ImageListener:
             self.flag = 0 
             try:
                 temp = [self.bridge.imgmsg_to_cv2(data, data.encoding)]
-                self.cv_image = np.concatenate((self.cv_image[1:4],temp))
+                self.cv_image = np.concatenate((self.cv_image[1:5],temp))
                 pose = [{"x":n,"y":e, "z":d,"yaw":yaw}]
-                self.image_pose = np.concatenate((self.image_pose[1:4],pose))
+                self.image_pose = np.concatenate((self.image_pose[1:5],pose))
                 self.SomeTable = {}
             except CvBridgeError as er:
                 print(er)
@@ -119,7 +119,7 @@ if __name__ == '__main__':
 
     while not rospy.is_shutdown():
 
-        FootXPos_world = np.array([450,450,450,600,600,600])
+        FootXPos_world = np.array([450,450,450,150,600,600])
         FootYPos_world = np.array([0,125,-125,0,125,-125])
 
         if NewPosFlag == 1:
@@ -132,15 +132,15 @@ if __name__ == '__main__':
 
             for k in range(0,6):
                 loopCounter = 0; loopBreak = 0
-                while loopCounter <= 3 and loopBreak == 0:
+                while loopCounter <= 4 and loopBreak == 0:
                     
                     n_snapshot = listener.image_pose[loopCounter]["x"]
                     e_snapshot = listener.image_pose[loopCounter]["y"]
                     d_snapshot = listener.image_pose[loopCounter]["z"]
                     yaw_snapshot = listener.image_pose[loopCounter]["yaw"]
 
-                    FootXPos = FootXPos_world*np.cos(-yaw_snapshot) - FootYPos_world*np.sin(-yaw_snapshot) - np.cos(np.arctan2(-e_snapshot*1000,n_snapshot*1000)-yaw_snapshot)*np.sqrt((n_snapshot*1000)**2+(e_snapshot*1000)**2)
-                    FootYPos = FootXPos_world*np.sin(-yaw_snapshot) + FootYPos_world*np.cos(-yaw_snapshot) - np.sin(np.arctan2(-e_snapshot*1000,n_snapshot*1000)-yaw_snapshot)*np.sqrt((n_snapshot*1000)**2+(e_snapshot*1000)**2)
+                    FootXPos = FootXPos_world[k]*np.cos(-yaw_snapshot) - FootYPos_world[k]*np.sin(-yaw_snapshot) - np.cos(np.arctan2(-e_snapshot*1000,n_snapshot*1000)-yaw_snapshot)*np.sqrt((n_snapshot*1000)**2+(e_snapshot*1000)**2)
+                    FootYPos = FootXPos_world[k]*np.sin(-yaw_snapshot) + FootYPos_world[k]*np.cos(-yaw_snapshot) - np.sin(np.arctan2(-e_snapshot*1000,n_snapshot*1000)-yaw_snapshot)*np.sqrt((n_snapshot*1000)**2+(e_snapshot*1000)**2)
                     
                     
 
@@ -153,27 +153,34 @@ if __name__ == '__main__':
                         zc[i] = (np.sin((90+CA)*np.pi/180)*FootXPos + np.cos((90+CA)*np.pi/180)*h - HL*np.cos(AngHL+CA*np.pi/180))
                         i = i + 1
 
-                    xc = -FootYPos + LI
+                    if k == 3:
+                        xc = [None,None] # edit footypos
+                        xc[0] = -FootYPos - 15 + LI
+                        xc[1] = -FootYPos + 15 + LI
+                    else:
+                        xc = [None]
+                        xc[0] = -FootYPos + LI
 
                     
-                    for i,j in zip(yc,zc):
-                        if listener.intrinsics:
-                            Pixels = rs2.rs2_project_point_to_pixel(listener.intrinsics,[xc[k],i[k],j[k]])
-                            Pixels[0] = round(Pixels[0])
-                            Pixels[1] = round(Pixels[1])
-                            Pixels[0] = 0 if Pixels[0] < 0 else (listener.intrinsics.width-1 if Pixels[0] >= listener.intrinsics.width else Pixels[0])
-                            Pixels[1] = 0 if Pixels[1] < 0 else (listener.intrinsics.height-1 if Pixels[1] >= listener.intrinsics.height else Pixels[1])
-                            depth = listener.cv_image[loopCounter][Pixels[1],Pixels[0]] 
+                    for XC in xc:
+                        for i,j in zip(yc,zc):
+                            if listener.intrinsics:
+                                Pixels = rs2.rs2_project_point_to_pixel(listener.intrinsics,[XC,i,j])
+                                Pixels[0] = round(Pixels[0])
+                                Pixels[1] = round(Pixels[1])
+                                Pixels[0] = 0 if Pixels[0] < 0 else (listener.intrinsics.width-1 if Pixels[0] >= listener.intrinsics.width else Pixels[0])
+                                Pixels[1] = 0 if Pixels[1] < 0 else (listener.intrinsics.height-1 if Pixels[1] >= listener.intrinsics.height else Pixels[1])
+                                depth = listener.cv_image[loopCounter][Pixels[1],Pixels[0]] 
 
-                            if abs((depth-j[k])/depth) < 0.02:
-                                loopBreak = 1
-                                flag[k] = 1
-                                z = depth 
+                                if abs((depth-j)/depth) < 0.02:
+                                    loopBreak = 1
+                                    flag[k] = 1
+                                    z = depth 
 
-                                if j[k] < jmin[k]:
-                                    jmin[k] = j[k]
-                                    zmax[k] = z
-                                    TransZ[k] = round(np.sin((-90-CA)*np.pi/180)*i[k] + np.cos((-90-CA)*np.pi/180)*j[k] + HL*np.sin(AngHL))
+                                    if j < jmin[k]:
+                                        jmin[k] = j
+                                        zmax[k] = z
+                                        TransZ[k] = round(np.sin((-90-CA)*np.pi/180)*i + np.cos((-90-CA)*np.pi/180)*j + HL*np.sin(AngHL))
                             
                     if flag[k] == 0:
                         zmax[k] = None
