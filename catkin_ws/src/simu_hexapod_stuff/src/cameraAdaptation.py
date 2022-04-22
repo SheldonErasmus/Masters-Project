@@ -78,13 +78,13 @@ def imu_cb(msg):
     global roll,pitch,yaw
     (roll,pitch,yaw) = ToEulerAng(msg.orientation.x,msg.orientation.y,msg.orientation.z,msg.orientation.w)
 
-FeetPlaceXBuffer = np.empty((2,6))
-FeetPlaceYBuffer = np.empty((2,6))
+FeetPlaceXBuffer = np.zeros(12)
+FeetPlaceYBuffer = np.zeros(12)
 NewPosFlag = 0
 def FeetPlace_cb(msg):
     global FeetPlaceXBuffer, FeetPlaceYBuffer, NewPosFlag
-    FeetPlaceXBuffer = msg.XPlace
-    FeetPlaceXBuffer = msg.YPlace
+    FeetPlaceXBuffer = np.concatenate((FeetPlaceXBuffer[6:12],msg.XPlace))
+    FeetPlaceXBuffer = np.concatenate((FeetPlaceYBuffer[6:12],msg.YPlace))
     NewPosFlag = 1
 
 def FeetOnFloor_cb(msg):
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     FeetOnFloorFlag_sub = rospy.Subscriber("/FeetOnFloorFlag",Float32, FeetOnFloor_cb)
     rospy.sleep(1)
     listener.flag = 1
-    msg = PathVar_n_cmdVel()
+    msg = PathVar_n_cmdVel(); msg.path_var.Fh = [0.0,0.0,0.0,0.0,0.0,0.0]
 
     robot = HexapodC()
     
@@ -119,8 +119,8 @@ if __name__ == '__main__':
 
     while not rospy.is_shutdown():
 
-        FootXPos_world = np.array([450,450,450,150,600,600])
-        FootYPos_world = np.array([0,125,-125,0,125,-125])
+        FootXPos_world = np.array([450,450,450,600,600,600])#FootXPos_world = FeetPlaceXBuffer[0:6] #FootXPos_world = np.array([450,450,450,600,600,600])
+        FootYPos_world = np.array([0,125,-125,0,125,-125])#FootYPos_world = FeetPlaceYBuffer[0:6] #FootYPos_world = np.array([0,125,-125,0,125,-125])
 
         if NewPosFlag == 1:
             NewPosFlag = 0
@@ -154,9 +154,10 @@ if __name__ == '__main__':
                         i = i + 1
 
                     if k == 3:
-                        xc = [None,None] # edit footypos
-                        xc[0] = -FootYPos - 15 + LI
-                        xc[1] = -FootYPos + 15 + LI
+                        k3_count = 0
+                        TransZ_world_temp = [0.0,0.0]
+                        FootYPos = FootYPos + np.array([-20,20])
+                        xc = -FootYPos + LI
                     else:
                         xc = [None]
                         xc[0] = -FootYPos + LI
@@ -182,23 +183,36 @@ if __name__ == '__main__':
                                         zmax[k] = z
                                         TransZ[k] = round(np.sin((-90-CA)*np.pi/180)*i + np.cos((-90-CA)*np.pi/180)*j + HL*np.sin(AngHL))
                             
-                    if flag[k] == 0:
-                        zmax[k] = None
-                        TransZ[k]= None
-                
-                    #print([zmax,TransZ])
+                        if flag[k] == 0:
+                            zmax[k] = None
+                            TransZ[k]= None
+                    
+                        #print([zmax,TransZ])
 
-                    beta = 0*np.pi/180; gamma = -0*np.pi/180; alpha = 0; Z_gps = -d_snapshot*1000
+                        beta = 0*np.pi/180; gamma = -0*np.pi/180; alpha = 0; Z_gps = -d_snapshot*1000
 
-                    TransZ_world = (np.cos(beta)*np.sin(gamma)*np.sin(alpha)-np.sin(beta)*np.cos(alpha))*FootXPos + (np.sin(beta)*np.sin(alpha)+np.cos(beta)*np.sin(gamma)*np.cos(alpha))*FootYPos + (np.cos(beta)*np.cos(gamma))*TransZ + Z_gps
+                        if k == 3:
+                            jmin[k] = 99999
+                            TransZ_world_temp[k3_count] = (np.cos(beta)*np.sin(gamma)*np.sin(alpha)-np.sin(beta)*np.cos(alpha))*FootXPos + (np.sin(beta)*np.sin(alpha)+np.cos(beta)*np.sin(gamma)*np.cos(alpha))*FootYPos[k3_count] + (np.cos(beta)*np.cos(gamma))*TransZ[k] + Z_gps
+                            if k3_count == 1:
+                                TransZ_world[k] = (TransZ_world_temp[0] + TransZ_world_temp[1])/2
+                            k3_count = k3_count + 1
+                        else:
+                            TransZ_world[k] = (np.cos(beta)*np.sin(gamma)*np.sin(alpha)-np.sin(beta)*np.cos(alpha))*FootXPos + (np.sin(beta)*np.sin(alpha)+np.cos(beta)*np.sin(gamma)*np.cos(alpha))*FootYPos + (np.cos(beta)*np.cos(gamma))*TransZ[k] + Z_gps
 
                     loopCounter = loopCounter + 1
 
         #print(TransZ); 
         print("\t"); print(TransZ_world)
 
+        for k in range(6):
+            if np.isnan(TransZ_world[k]):
+                msg.path_var.Fh[k] = msg.path_var.Fh[k]
+            else:
+                msg.path_var.Fh[k] = TransZ_world[k]
+
         msg.path_var.Sh = [50, 50, 50, 50, 50, 50]
-        msg.path_var.Fh = [0, 0, 0, 0, 0, 0]
+        #msg.path_var.Fh = TransZ_world[0:6]
         msg.Name = 'Camera'
         pub.publish(msg)
         
