@@ -78,13 +78,13 @@ def imu_cb(msg):
     global roll,pitch,yaw
     (roll,pitch,yaw) = ToEulerAng(msg.orientation.x,msg.orientation.y,msg.orientation.z,msg.orientation.w)
 
-FeetPlaceXBuffer = np.zeros(12)
-FeetPlaceYBuffer = np.zeros(12)
+FeetPlaceXBuffer = np.ones(12)
+FeetPlaceYBuffer = np.ones(12)
 NewPosFlag = 0
 def FeetPlace_cb(msg):
     global FeetPlaceXBuffer, FeetPlaceYBuffer, NewPosFlag
     FeetPlaceXBuffer = np.concatenate((FeetPlaceXBuffer[6:12],msg.XPlace))
-    FeetPlaceXBuffer = np.concatenate((FeetPlaceYBuffer[6:12],msg.YPlace))
+    FeetPlaceYBuffer = np.concatenate((FeetPlaceYBuffer[6:12],msg.YPlace))
     NewPosFlag = 1
 
 def FeetOnFloor_cb(msg):
@@ -119,8 +119,8 @@ if __name__ == '__main__':
 
     while not rospy.is_shutdown():
 
-        FootXPos_world = np.array([450,450,450,600,600,600])#FootXPos_world = FeetPlaceXBuffer[0:6] #FootXPos_world = np.array([450,450,450,600,600,600])
-        FootYPos_world = np.array([0,125,-125,0,125,-125])#FootYPos_world = FeetPlaceYBuffer[0:6] #FootYPos_world = np.array([0,125,-125,0,125,-125])
+        FootXPos_world = FeetPlaceXBuffer[0:6] #FootXPos_world = np.array([450.0,450.0,450.0,600.0,600.0,600.0])
+        FootYPos_world = FeetPlaceYBuffer[0:6] #FootYPos_world = np.array([0.0,125.0,-125.0,0.0,125.0,-125.0])
 
         if NewPosFlag == 1:
             NewPosFlag = 0
@@ -202,17 +202,19 @@ if __name__ == '__main__':
 
                     loopCounter = loopCounter + 1
 
-        #print(TransZ); 
-        print("\t"); print(TransZ_world)
+            #print(TransZ); 
+            print("\t"); print(TransZ_world)
 
-        for k in range(6):
-            if np.isnan(TransZ_world[k]):
-                msg.path_var.Fh[k] = msg.path_var.Fh[k]
-            else:
-                msg.path_var.Fh[k] = TransZ_world[k]
+            for k in range(6):
+                if np.isnan(TransZ_world[k]):
+                    msg.path_var.Fh[k] = msg.path_var.Fh[k]
+                else:
+                    msg.path_var.Fh[k] = TransZ_world[k]
 
-        msg.path_var.Sh = [50, 50, 50, 50, 50, 50]
-        #msg.path_var.Fh = TransZ_world[0:6]
-        msg.Name = 'Camera'
-        pub.publish(msg)
+            msg.path_var.Sh = [50, 50, 50, 50, 50, 50]
+            #msg.path_var.Fh = TransZ_world[0:6]
+            msg.Name = 'Camera'
+            pub.publish(msg)
+
+        
         

@@ -334,7 +334,7 @@ while 1:
             
             A_theta1[0] = 0
             A_theta2[0] = 0
-            A_theta3[0] = 0
+            A_theta3[1] = 0
 
             (px,py,pz) = FK03_inbody(A_theta1[0],A_theta2[0],A_theta3[0],0)
             (A_theta1[0],A_theta2[0],A_theta3[0]) = IK(px,py,pz,0,0,0,0,0,0)
