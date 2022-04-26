@@ -78,8 +78,8 @@ def imu_cb(msg):
     global roll,pitch,yaw
     (roll,pitch,yaw) = ToEulerAng(msg.orientation.x,msg.orientation.y,msg.orientation.z,msg.orientation.w)
 
-FeetPlaceXBuffer = np.ones(12)
-FeetPlaceYBuffer = np.ones(12)
+FeetPlaceXBuffer = np.ones(12)/1000
+FeetPlaceYBuffer = np.ones(12)/1000
 NewPosFlag = 0
 def FeetPlace_cb(msg):
     global FeetPlaceXBuffer, FeetPlaceYBuffer, NewPosFlag
@@ -119,8 +119,10 @@ if __name__ == '__main__':
 
     while not rospy.is_shutdown():
 
-        FootXPos_world = FeetPlaceXBuffer[0:6] #FootXPos_world = np.array([450.0,450.0,450.0,600.0,600.0,600.0])
-        FootYPos_world = FeetPlaceYBuffer[0:6] #FootYPos_world = np.array([0.0,125.0,-125.0,0.0,125.0,-125.0])
+        FootXPos_world = FeetPlaceXBuffer[0:6]*1000 
+        #FootXPos_world = np.array([450.0,450.0,450.0,600.0,600.0,600.0])
+        FootYPos_world = FeetPlaceYBuffer[0:6]*1000 
+        #FootYPos_world = np.array([0.0,125.0,-125.0,0.0,125.0,-125.0])
 
         if NewPosFlag == 1:
             NewPosFlag = 0
@@ -134,9 +136,9 @@ if __name__ == '__main__':
                 loopCounter = 0; loopBreak = 0
                 while loopCounter <= 4 and loopBreak == 0:
                     
-                    n_snapshot = listener.image_pose[loopCounter]["x"]
-                    e_snapshot = listener.image_pose[loopCounter]["y"]
-                    d_snapshot = listener.image_pose[loopCounter]["z"]
+                    n_snapshot = round(listener.image_pose[loopCounter]["x"],3)
+                    e_snapshot = round(listener.image_pose[loopCounter]["y"],3)
+                    d_snapshot = round(listener.image_pose[loopCounter]["z"],3)
                     yaw_snapshot = listener.image_pose[loopCounter]["yaw"]
 
                     FootXPos = FootXPos_world[k]*np.cos(-yaw_snapshot) - FootYPos_world[k]*np.sin(-yaw_snapshot) - np.cos(np.arctan2(-e_snapshot*1000,n_snapshot*1000)-yaw_snapshot)*np.sqrt((n_snapshot*1000)**2+(e_snapshot*1000)**2)
@@ -169,8 +171,10 @@ if __name__ == '__main__':
                                 Pixels = rs2.rs2_project_point_to_pixel(listener.intrinsics,[XC,i,j])
                                 Pixels[0] = round(Pixels[0])
                                 Pixels[1] = round(Pixels[1])
-                                Pixels[0] = 0 if Pixels[0] < 0 else (listener.intrinsics.width-1 if Pixels[0] >= listener.intrinsics.width else Pixels[0])
-                                Pixels[1] = 0 if Pixels[1] < 0 else (listener.intrinsics.height-1 if Pixels[1] >= listener.intrinsics.height else Pixels[1])
+                                #Pixels[0] = 0 if Pixels[0] < 0 else (listener.intrinsics.width-1 if Pixels[0] >= listener.intrinsics.width else Pixels[0])
+                                #Pixels[1] = 0 if Pixels[1] < 0 else (listener.intrinsics.height-1 if Pixels[1] >= listener.intrinsics.height else Pixels[1])
+                                if Pixels[0] < 0 or Pixels[0] >= listener.intrinsics.width: continue
+                                if Pixels[1] < 0 or Pixels[1] >= listener.intrinsics.height: continue
                                 depth = listener.cv_image[loopCounter][Pixels[1],Pixels[0]] 
 
                                 if abs((depth-j)/depth) < 0.02:
