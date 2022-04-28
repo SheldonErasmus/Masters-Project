@@ -81,14 +81,18 @@ def imu_cb(msg):
 FeetPlaceXBuffer = np.ones(12)/1000
 FeetPlaceYBuffer = np.ones(12)/1000
 NewPosFlag = 0
+adjustHeightFlag = -1
 def FeetPlace_cb(msg):
-    global FeetPlaceXBuffer, FeetPlaceYBuffer, NewPosFlag
+    global FeetPlaceXBuffer, FeetPlaceYBuffer, NewPosFlag,adjustHeightFlag
     FeetPlaceXBuffer = np.concatenate((FeetPlaceXBuffer[6:12],msg.XPlace))
     FeetPlaceYBuffer = np.concatenate((FeetPlaceYBuffer[6:12],msg.YPlace))
     NewPosFlag = 1
+    adjustHeightFlag = 0
 
 def FeetOnFloor_cb(msg):
+    global adjustHeightFlag
     listener.flag = 1
+    if adjustHeightFlag == -1: adjustHeightFlag = 1
 
 
 if __name__ == '__main__':
@@ -103,7 +107,7 @@ if __name__ == '__main__':
     FeetOnFloorFlag_sub = rospy.Subscriber("/FeetOnFloorFlag",Float32, FeetOnFloor_cb)
     rospy.sleep(1)
     listener.flag = 1
-    msg = PathVar_n_cmdVel(); msg.path_var.Fh = [0.0,0.0,0.0,0.0,0.0,0.0]
+    msg = PathVar_n_cmdVel(); msg.path_var.Fh = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
 
     robot = HexapodC()
     
@@ -208,14 +212,46 @@ if __name__ == '__main__':
 
             #print(TransZ); 
             print("\t"); print(TransZ_world)
+            
+        if adjustHeightFlag == 0:
+            print(adjustHeightFlag)
+            adjustHeightFlag = -1
 
-            for k in range(6):
+            for k in [1,3,5]:
+                    msg.path_var.Fh[k] = msg.path_var.Fh[k+6]
+
+            for k in [0,2,4]:
                 if np.isnan(TransZ_world[k]):
-                    msg.path_var.Fh[k] = msg.path_var.Fh[k]
+                    msg.path_var.Fh[k+6] = msg.path_var.Fh[k+6]
                 else:
-                    msg.path_var.Fh[k] = TransZ_world[k]
+                    msg.path_var.Fh[k+6] = TransZ_world[k]
 
-            msg.path_var.Sh = [50, 50, 50, 50, 50, 50]
+            for k in [0,2,4]:
+                if msg.path_var.Fh[k+6] > msg.path_var.Fh[k]:
+                    msg.path_var.Fh[k] = msg.path_var.Fh[k+6]
+
+            msg.path_var.Sh = [50, 50, 50, 50, 50, 50]+msg.path_var.Fh[0:6]
+            #msg.path_var.Fh = TransZ_world[0:6]
+            msg.Name = 'Camera'
+            pub.publish(msg)
+        elif adjustHeightFlag == 1:
+            print(adjustHeightFlag)
+            adjustHeightFlag = -2
+
+            for k in [0,2,4]:
+                    msg.path_var.Fh[k] = msg.path_var.Fh[k+6]
+
+            for k in [1,3,5]:
+                if np.isnan(TransZ_world[k]):
+                    msg.path_var.Fh[k+6] = msg.path_var.Fh[k+6]
+                else:
+                    msg.path_var.Fh[k+6] = TransZ_world[k]
+
+            for k in [1,3,5]:
+                if msg.path_var.Fh[k+6] > msg.path_var.Fh[k]:
+                    msg.path_var.Fh[k] = msg.path_var.Fh[k+6]
+
+            msg.path_var.Sh = [50, 50, 50, 50, 50, 50]+msg.path_var.Fh[0:6]
             #msg.path_var.Fh = TransZ_world[0:6]
             msg.Name = 'Camera'
             pub.publish(msg)
