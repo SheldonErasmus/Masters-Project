@@ -12,10 +12,11 @@ from std_msgs.msg import Float32
 XPath = [[None for i in range(3)] for i in range(6)]
 YPath = [[None for i in range(3)] for i in range(6)]
 ZPath = [[None for i in range(3)] for i in range(6)]
-StepS_x = 0; StepS_y = 0; TurnPath = 0
+TurnPath = [None for i in range(3)]
+StepS_x = 0; StepS_y = 0
 FeetChangedFlag = 0
 def path_cb(msg):
-    global StepS_x, StepS_y, TurnPath, FeetChangedFlag
+    global StepS_x, StepS_y, FeetChangedFlag
     FeetChangedFlag = 1
     for col in [0,3,6]:
         XPath[0][col//3]=msg.PathL0x[col]
@@ -39,23 +40,27 @@ def path_cb(msg):
         ZPath[4][col//3]=msg.PathL4z[col]
         ZPath[5][col//3]=msg.PathL5z[col]
 
-        TurnPath = msg.PathAng[6]
+        TurnPath[col//3] = msg.PathAng[col]
 
     # StepS = round(sqrt((abs(XPath[0][1]-XPath[0][0])/1000)**2 + (abs(YPath[0][1]-YPath[0][0])/1000)**2),3)
         
-    yaw_rad = TurnPath * pi/180.0
-    for i in range(6):
-        existingAngle = arctan2(YPath[i][2],XPath[i][2])
+    yawSign = [1,1,1,1,1,1]
+    for j in range(3):
+        for i in range(6):
+            existingAngle = arctan2(YPath[i][j],XPath[i][j])
 
-        radius = sqrt(XPath[i][2]**2+YPath[i][2]**2)
+            radius = sqrt(XPath[i][j]**2+YPath[i][j]**2)
 
-        demandYaw = existingAngle + yaw_rad
+            if i == 1 or i == 3 or i == 5:
+                yaw_rad = TurnPath[0] * pi/180.0 if j == 2 else (TurnPath[2] * pi/180.0 if j == 0 else TurnPath[1] * pi/180.0)
+            else:
+                yaw_rad = TurnPath[j] * pi/180.0
 
-        XPath[i][2] = radius*cos(demandYaw)
-        YPath[i][2] = radius*sin(demandYaw)
+            demandYaw = existingAngle + yaw_rad*yawSign[i]
 
-    StepS_x = round(abs(XPath[0][2]-XPath[0][0])/1000,3)
-    StepS_y = round((YPath[0][2]-YPath[0][0])/1000,3)
+            XPath[i][j] = radius*cos(demandYaw)
+            YPath[i][j] = radius*sin(demandYaw)
+
 
 n = 0.0
 e = 0.0
@@ -101,18 +106,26 @@ if __name__ == '__main__':
     spawn_model_client = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
     delete_model_client = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)
 
-    num = -1
-    for k in range(6):
-        #num = num +1
+    num = 0
+    for k in [1,3,5]:
+        StartFlag = 1
         FeetPlace.XPlace[k]  = (XPath[k][1]/1000)*cos(yaw) - (YPath[k][1]/1000)*sin(yaw) + n
         FeetPlace.YPlace[k]  = (XPath[k][1]/1000)*sin(yaw) + (YPath[k][1]/1000)*cos(yaw) + (-e)
         #spawn_model_client(model_name='F'+str(k)+'P'+str(num),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='F'+str(k)+'P'+str(num),initial_pose=Pose(position=Point(FeetPlace.XPlace[k],FeetPlace.YPlace[k],0)),reference_frame='world')
 
-    
+    LoopRange = [1,3,5]
+
     while not rospy.is_shutdown():
 
         if FeetOnFloorFlag == 1:
             FeetOnFloorFlag = 0
+
+            if StartFlag == 0:
+                for k in LoopRange:
+                    FeetPlace.XPlace[k]  = (XPath[k][2]/1000)*cos(yaw) - (YPath[k][2]/1000)*sin(yaw) + n
+                    FeetPlace.YPlace[k]  = (XPath[k][2]/1000)*sin(yaw) + (YPath[k][2]/1000)*cos(yaw) + (-e)
+                    delete_model_client(model_name='F'+str(k)+'P'+str(num))
+            StartFlag = 0
 
             phi_LB = arctan2((XPath[feetOnFloor[1]][0]-XPath[feetOnFloor[0]][0]),(YPath[feetOnFloor[1]][0]-YPath[feetOnFloor[0]][0]))
             phi_LW = -arctan2((FeetPlace.XPlace[feetOnFloor[1]]-FeetPlace.XPlace[feetOnFloor[0]]),(FeetPlace.YPlace[feetOnFloor[1]]-FeetPlace.YPlace[feetOnFloor[0]]))
