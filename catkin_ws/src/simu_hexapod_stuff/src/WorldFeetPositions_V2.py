@@ -44,7 +44,6 @@ def path_cb(msg):
 
     # StepS = round(sqrt((abs(XPath[0][1]-XPath[0][0])/1000)**2 + (abs(YPath[0][1]-YPath[0][0])/1000)**2),3)
         
-    yawSign = [1,1,1,1,1,1]
     for j in range(3):
         for i in range(6):
             existingAngle = arctan2(YPath[i][j],XPath[i][j])
@@ -52,11 +51,11 @@ def path_cb(msg):
             radius = sqrt(XPath[i][j]**2+YPath[i][j]**2)
 
             if i == 1 or i == 3 or i == 5:
-                yaw_rad = TurnPath[0] * pi/180.0 if j == 2 else (TurnPath[2] * pi/180.0 if j == 0 else TurnPath[1] * pi/180.0)
+                yaw_rad = -TurnPath[0] * pi/180.0 if j == 2 else (-TurnPath[2] * pi/180.0 if j == 0 else -TurnPath[1] * pi/180.0)
             else:
                 yaw_rad = TurnPath[j] * pi/180.0
 
-            demandYaw = existingAngle + yaw_rad*yawSign[i]
+            demandYaw = existingAngle + yaw_rad
 
             XPath[i][j] = radius*cos(demandYaw)
             YPath[i][j] = radius*sin(demandYaw)
