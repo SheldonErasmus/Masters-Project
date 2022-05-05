@@ -58,8 +58,8 @@ def imu_cb(msg):
 
 if __name__ == '__main__':
 
-    rollController = PIDcontroller(0, 1/2, 0.0, 0, 1/1)
-    pitchController = PIDcontroller(0, 1/2, 0.0, 0, 1/1)
+    rollController = PIDcontroller(0, 1/2, 0.0, 0, 1/100)
+    pitchController = PIDcontroller(0, 1/2, 0.0, 0, 1/100)
 
     robot = HexapodC()
 

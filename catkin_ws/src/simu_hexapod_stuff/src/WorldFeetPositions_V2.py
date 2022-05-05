@@ -126,7 +126,7 @@ if __name__ == '__main__':
                     delete_model_client(model_name='F'+str(k)+'P'+str(num))
             StartFlag = 0
 
-            phi_LB = arctan2((XPath[feetOnFloor[1]][0]-XPath[feetOnFloor[0]][0]),(YPath[feetOnFloor[1]][0]-YPath[feetOnFloor[0]][0]))
+            phi_LB = -arctan2((XPath[feetOnFloor[1]][0]-XPath[feetOnFloor[0]][0]),(YPath[feetOnFloor[1]][0]-YPath[feetOnFloor[0]][0]))
             phi_LW = -arctan2((FeetPlace.XPlace[feetOnFloor[1]]-FeetPlace.XPlace[feetOnFloor[0]]),(FeetPlace.YPlace[feetOnFloor[1]]-FeetPlace.YPlace[feetOnFloor[0]]))
 
             if feetOnFloor[0] == 1: LoopRange = [0,2,4]
@@ -148,6 +148,7 @@ if __name__ == '__main__':
                 FeetPlace.YPlace[k] = deltaY_W/1000 + FeetPlace.YPlace[feetOnFloor[0]]
 
                 spawn_model_client(model_name='F'+str(k)+'P'+str(num),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='F'+str(k)+'P'+str(num),initial_pose=Pose(position=Point(FeetPlace.XPlace[k],FeetPlace.YPlace[k],0)),reference_frame='world')
+            pubFeetPlace.publish(FeetPlace) #publish world positions
                 
 
 

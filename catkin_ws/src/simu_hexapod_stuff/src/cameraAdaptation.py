@@ -21,11 +21,11 @@ class ImageListener:
         self.sub = rospy.Subscriber(topic, msg_Image, self.imageDepthCallback)
         self.sub_info = rospy.Subscriber('/camera/depth/camera_info', CameraInfo, self.imageDepthInfoCallback)
         self.intrinsics = None
-        self.cv_image = [np.ones((720,1280)) for i in range(5)]
+        self.cv_image = [np.ones((720,1280)) for i in range(6)]
         self.flag = 0
 
         pose = {"x":0,"y":0, "z":0,"yaw":0}
-        self.image_pose = [pose for i in range(5)]
+        self.image_pose = [pose for i in range(6)]
 
         self.SomeTable = {}
 
@@ -34,9 +34,9 @@ class ImageListener:
             self.flag = 0 
             try:
                 temp = [self.bridge.imgmsg_to_cv2(data, data.encoding)]
-                self.cv_image = np.concatenate((self.cv_image[1:5],temp))
+                self.cv_image = np.concatenate((self.cv_image[1:6],temp))
                 pose = [{"x":n,"y":e, "z":d,"yaw":yaw}]
-                self.image_pose = np.concatenate((self.image_pose[1:5],pose))
+                self.image_pose = np.concatenate((self.image_pose[1:6],pose))
                 self.SomeTable = {}
             except CvBridgeError as er:
                 print(er)
@@ -81,18 +81,19 @@ def imu_cb(msg):
 FeetPlaceXBuffer = np.ones(12)/1000
 FeetPlaceYBuffer = np.ones(12)/1000
 NewPosFlag = 0
-adjustHeightFlag = -1
+adjustHeightFlag = -2
 def FeetPlace_cb(msg):
     global FeetPlaceXBuffer, FeetPlaceYBuffer, NewPosFlag,adjustHeightFlag
-    FeetPlaceXBuffer = np.concatenate((FeetPlaceXBuffer[6:12],msg.XPlace))
-    FeetPlaceYBuffer = np.concatenate((FeetPlaceYBuffer[6:12],msg.YPlace))
+    FeetPlaceXBuffer = np.array(msg.XPlace) #np.concatenate((FeetPlaceXBuffer[6:12],msg.XPlace))
+    FeetPlaceYBuffer = np.array(msg.YPlace) #np.concatenate((FeetPlaceYBuffer[6:12],msg.YPlace))
     NewPosFlag = 1
-    adjustHeightFlag = 0
+    if adjustHeightFlag == -2: adjustHeightFlag = 0
+    if adjustHeightFlag == -1: adjustHeightFlag = 1
 
 def FeetOnFloor_cb(msg):
     global adjustHeightFlag
     listener.flag = 1
-    if adjustHeightFlag == -1: adjustHeightFlag = 1
+    #if adjustHeightFlag == -1: adjustHeightFlag = 1
 
 
 if __name__ == '__main__':
@@ -110,6 +111,8 @@ if __name__ == '__main__':
     msg = PathVar_n_cmdVel(); msg.path_var.Fh = np.array([0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
 
     robot = HexapodC()
+
+    rospy.wait_for_message('WorldFeetPlace',WorldFeetPlace)
     
     H = 300 #height of cam
     L = 0 #X offset of cam
@@ -123,9 +126,9 @@ if __name__ == '__main__':
 
     while not rospy.is_shutdown():
 
-        FootXPos_world = FeetPlaceXBuffer[0:6]*1000 
+        FootXPos_world = FeetPlaceXBuffer*1000 
         #FootXPos_world = np.array([450.0,450.0,450.0,600.0,600.0,600.0])
-        FootYPos_world = FeetPlaceYBuffer[0:6]*1000 
+        FootYPos_world = FeetPlaceYBuffer*1000 
         #FootYPos_world = np.array([0.0,125.0,-125.0,0.0,125.0,-125.0])
 
         if NewPosFlag == 1:
@@ -138,7 +141,7 @@ if __name__ == '__main__':
 
             for k in range(0,6):
                 loopCounter = 0; loopBreak = 0
-                while loopCounter <= 4 and loopBreak == 0:
+                while loopCounter <= 5 and loopBreak == 0:
                     
                     n_snapshot = round(listener.image_pose[loopCounter]["x"],3)
                     e_snapshot = round(listener.image_pose[loopCounter]["y"],3)
