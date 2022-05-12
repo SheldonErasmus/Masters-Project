@@ -35,14 +35,6 @@ class ImageListener:
             self.pc = np.concatenate((self.pc[1:6],temp))
             pose = [{"x":n,"y":e, "z":d,"yaw":yaw}]
             self.image_pose = np.concatenate((self.image_pose[1:6],pose))
-
-        # self.pointsX = np.round(pc['x']*1000)
-        # self.pointsY = np.round(pc['y']*1000)
-        # self.pointsZ = np.round(pc['z']*1000)
-
-        # self.PointsX_H = np.cos((-90-CA)*np.pi/180)*self.pointsY - np.sin((-90-CA)*np.pi/180)*self.pointsZ + HL*np.cos(AngHL)
-        # self.PointsY_H = -self.pointsX + LI
-        # self.PointsZ_H = np.sin((-90-CA)*np.pi/180)*self.pointsY + np.cos((-90-CA)*np.pi/180)*self.pointsZ + HL*np.sin(AngHL)
         weee = 0
 
 n = 0.0
@@ -83,8 +75,8 @@ LI = 17.5 #Left imager offset
 HL = np.sqrt(H**2+L**2) #slope of offsets
 AngHL = np.arctan2(H,L) #Angle of offsets
 
-FootX_w = 1000
-FootY_w = 0
+FootX_w = [1000.0,450.0,450.0,600.0,600.0,600.0]
+FootY_w = [0.0,125.0,-125.0,0.0,125.0,-125.0]
 
 if __name__ == '__main__':
     rospy.init_node("Camera_terrain_adaptation")
@@ -127,40 +119,47 @@ if __name__ == '__main__':
                     pointsY = listener.pc[loopCounter]['y']*1000
                     pointsZ = listener.pc[loopCounter]['z']*1000
 
-                    PointsX_H = np.cos((-90-CA)*np.pi/180)*pointsY - np.sin((-90-CA)*np.pi/180)*pointsZ + HL*np.cos(AngHL)
-                    PointsY_H = -pointsX + LI
-                    PointsZ_H = np.sin((-90-CA)*np.pi/180)*pointsY + np.cos((-90-CA)*np.pi/180)*pointsZ + HL*np.sin(AngHL)
+                    PointsX_H = np.round(np.cos((-90-CA)*np.pi/180)*pointsY - np.sin((-90-CA)*np.pi/180)*pointsZ + HL*np.cos(AngHL))
+                    PointsY_H = np.round(-pointsX + LI)
+                    PointsZ_H = np.round(np.sin((-90-CA)*np.pi/180)*pointsY + np.cos((-90-CA)*np.pi/180)*pointsZ + HL*np.sin(AngHL))
 
                     PointsX_W = np.round(np.cos(yaw_snapshot)*PointsX_H - np.sin(yaw_snapshot)*PointsY_H + n_snapshot*1000)
                     PointsY_W = np.round(np.sin(yaw_snapshot)*PointsX_H + np.cos(yaw_snapshot)*PointsY_H - e_snapshot*1000)
                     PointsZ_W = np.round(PointsZ_H - d_snapshot*1000 + 10)
 
+                    FootXPos_H = np.round(FootXPos_world[k]*np.cos(-yaw_snapshot) - FootYPos_world[k]*np.sin(-yaw_snapshot) - np.cos(np.arctan2(-e_snapshot*1000,n_snapshot*1000)-yaw_snapshot)*np.sqrt((n_snapshot*1000)**2+(e_snapshot*1000)**2))
+                    FootYPos_H = np.round(FootXPos_world[k]*np.sin(-yaw_snapshot) + FootYPos_world[k]*np.cos(-yaw_snapshot) - np.sin(np.arctan2(-e_snapshot*1000,n_snapshot*1000)-yaw_snapshot)*np.sqrt((n_snapshot*1000)**2+(e_snapshot*1000)**2))
+
                     if k == 3:
                         k3_count = 0
                         TransZ_world_temp = [0.0,0.0]
-                        FootY_W = FootY_w + np.array([-20,20])
-                        FootX_W = FootX_w
+                        footYPos_H = FootYPos_H + np.array([-20,20])
                     else:
-                        FootY_W = [FootY_w]
-                        FootX_W = FootX_w
+                        footYPos_H = [FootYPos_H]
 
-                    for footY_W in FootY_W:
-                        if np.any(np.absolute(PointsX_W-FootX_W) < 5):
-                            indexX = np.unravel_index(np.argmin(np.absolute(PointsX_W-FootX_W)),PointsX_W.shape)
-                            indexY = np.argmin(np.absolute(PointsY_W[indexX[0]]-footY_W))
+                    for footY in footYPos_H:
+                        if np.any(np.absolute(PointsX_H-FootXPos_H) < 5):
+                            indexX = np.unravel_index(np.argmin(np.absolute(PointsX_H-FootXPos_H)),PointsX_H.shape)
+                            
+                            if np.any(np.absolute(PointsY_H[indexX[0]]-footY) < 5):
+                                loopBreak = 1
+                                indexY = np.argmin(np.absolute(PointsY_H[indexX[0]]-footY))
 
-                            if k == 3:
-                                TransZ_world_temp[k3_count] = PointsZ_W[indexX[0]][indexY]
-                                if k3_count == 1:
-                                    TransZ_world[k] = (TransZ_world_temp[0] + TransZ_world_temp[1])/2
-                                k3_count = k3_count + 1
+                                if k == 3:
+                                    TransZ_world_temp[k3_count] = PointsZ_W[indexX[0]][indexY]
+                                    if k3_count == 1:
+                                        TransZ_world[k] = (TransZ_world_temp[0] + TransZ_world_temp[1])/2
+                                    k3_count = k3_count + 1
+                                else:
+                                    TransZ_world[k] = PointsZ_W[indexX[0]][indexY]
+
+                                #print(indexX[0],indexY,TransZ_world[k])
                             else:
-                                TransZ_world[k] = PointsZ_W[indexX[0]][indexY]
-
-                            print(indexX[0],indexY,TransZ_world[k])
+                                TransZ_world[k] = None
+                                #print(TransZ_world[k])
                         else:
                             TransZ_world[k] = None
-                            print(TransZ_world[k])
+                            #print(TransZ_world[k])
                     
                     #print(listener.PointsZ_H[0][0])
 

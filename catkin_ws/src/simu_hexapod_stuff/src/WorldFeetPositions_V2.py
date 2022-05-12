@@ -123,7 +123,7 @@ if __name__ == '__main__':
                 for k in LoopRange:
                     FeetPlace.XPlace[k]  = (XPath[k][2]/1000)*cos(yaw) - (YPath[k][2]/1000)*sin(yaw) + n
                     FeetPlace.YPlace[k]  = (XPath[k][2]/1000)*sin(yaw) + (YPath[k][2]/1000)*cos(yaw) + (-e)
-                    delete_model_client(model_name='F'+str(k)+'P'+str(num))
+                    #delete_model_client(model_name='F'+str(k)+'P'+str(num))
             StartFlag = 0
 
             phi_LB = -arctan2((XPath[feetOnFloor[1]][0]-XPath[feetOnFloor[0]][0]),(YPath[feetOnFloor[1]][0]-YPath[feetOnFloor[0]][0]))
@@ -147,7 +147,7 @@ if __name__ == '__main__':
                 FeetPlace.XPlace[k] = deltaX_W/1000 + FeetPlace.XPlace[feetOnFloor[0]]
                 FeetPlace.YPlace[k] = deltaY_W/1000 + FeetPlace.YPlace[feetOnFloor[0]]
 
-                spawn_model_client(model_name='F'+str(k)+'P'+str(num),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='F'+str(k)+'P'+str(num),initial_pose=Pose(position=Point(FeetPlace.XPlace[k],FeetPlace.YPlace[k],0)),reference_frame='world')
+                #spawn_model_client(model_name='F'+str(k)+'P'+str(num),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='F'+str(k)+'P'+str(num),initial_pose=Pose(position=Point(FeetPlace.XPlace[k],FeetPlace.YPlace[k],0)),reference_frame='world')
             pubFeetPlace.publish(FeetPlace) #publish world positions
                 
 
