@@ -93,3 +93,29 @@ def FK03_inbody(theta1,theta2,theta3,leg):
     Pz = z
 
     return Px, Py, Pz
+
+def FK02_inbody(theta1,theta2,theta3,leg):
+
+    x,y,z = FK02(theta1,theta2,theta3)
+
+    B = 125.54
+    rot = [0*pi/180, 60*pi/180, 120*pi/180, 180*pi/180, 240*pi/180, 300*pi/180]
+    
+    Px = y*sin(rot[leg])+(x+B)*cos(rot[leg])
+    Py = y*cos(rot[leg])-(x+B)*sin(rot[leg])
+    Pz = z
+
+    return Px, Py, Pz
+
+def FK00_inbody(leg):
+
+    x = 0; y = 0; z = 0
+
+    B = 125.54
+    rot = [0*pi/180, 60*pi/180, 120*pi/180, 180*pi/180, 240*pi/180, 300*pi/180]
+    
+    Px = y*sin(rot[leg])+(x+B)*cos(rot[leg])
+    Py = y*cos(rot[leg])-(x+B)*sin(rot[leg])
+    Pz = z
+
+    return Px, Py, Pz
