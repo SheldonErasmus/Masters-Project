@@ -147,7 +147,7 @@ if __name__ == '__main__':
                 FeetPlace.XPlace[k] = deltaX_W/1000 + FeetPlace.XPlace[feetOnFloor[0]]
                 FeetPlace.YPlace[k] = deltaY_W/1000 + FeetPlace.YPlace[feetOnFloor[0]]
 
-                #spawn_model_client(model_name='F'+str(k)+'P'+str(num),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='F'+str(k)+'P'+str(num),initial_pose=Pose(position=Point(FeetPlace.XPlace[k],FeetPlace.YPlace[k],0)),reference_frame='world')
+                #if k == 0 or k==2 or k==4: spawn_model_client(model_name='F'+str(k)+'P'+str(num),model_xml=open('/home/devlon/.gazebo/models/washer/model.sdf', 'r').read(),robot_namespace='F'+str(k)+'P'+str(num),initial_pose=Pose(position=Point(FeetPlace.XPlace[k],FeetPlace.YPlace[k],0)),reference_frame='world')
             pubFeetPlace.publish(FeetPlace) #publish world positions
                 
 
