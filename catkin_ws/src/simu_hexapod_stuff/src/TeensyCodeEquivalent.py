@@ -306,7 +306,11 @@ def ConstrainCheck(th1,th2,th3):
         th1 = list(prevTh1)
         th2 = list(prevTh2)
         th3 = list(prevTh3)
- 
+
+        for i in range(6):
+            (px,py,pz) = FK03_inbody(th1[i],th2[i],th3[i],i)
+            (th1[i],th2[i],th3[i]) = IK(px,py,pz,i,0,0,0,0,0)
+
     #return LegitMove
     return th1,th2,th3
 
