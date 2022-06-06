@@ -277,25 +277,38 @@ def SetAngles(th1,th2,th3):
     for j,v,n in zip(joints,Angle,range(18)):
         pub_angles[j].publish(data=[n,v])
 
-
+prevTh1 = [0,0,0,0,0,0];prevTh2 = [0,0,0,0,0,0];prevTh3 = [0,0,0,0,0,0]
 def ConstrainCheck(th1,th2,th3):
+    global prevTh1,prevTh2,prevTh3
     LegitMove = 1
 
     for i in range(6):
         if th3[i] >= 0 or th3[i] < -150/180*pi:
             LegitMove = 0
+
         if th2[i] > 60/180*pi or th2[i] < -90/180*pi:
             LegitMove = 0
-        if th1[i] > 90/180*pi or th1[i] < -90/180*pi:
+
+        if th1[i] > 50/180*pi or th1[i] < -50/180*pi:
             LegitMove = 0
-        
+
         # (x1,y1,z) = FK00_inbody(i)
         # (x2,y2,z) = FK03_inbody(th1[i],th2[i],th3[i],i)
         # k = 0 if i+1>5 else i+1
         # (x3,y3,z) = FK00_inbody(k)
         # (x3,y3,z) = FK03_inbody(th1[k],th2[k],th3[k],k)
 
-    return LegitMove
+    if LegitMove == 1:
+        prevTh1 = list(th1)
+        prevTh2 = list(th2)
+        prevTh3 = list(th3)
+    elif LegitMove == 0:
+        th1 = list(prevTh1)
+        th2 = list(prevTh2)
+        th3 = list(prevTh3)
+ 
+    #return LegitMove
+    return th1,th2,th3
 
 kinematicModeStartFlag = 0
 
@@ -337,7 +350,8 @@ while 1:
                 (T_theta1[3],T_theta2[3],T_theta3[3]) = IK(-283.71+tx, 0.0+ty, -140-tz,3,1000,troll,tpitch,-tyaw,0)
                 (T_theta1[4],T_theta2[4],T_theta3[4]) = IK(-141.855+tx, 245.7+ty, -140-tz,4,1000,troll,tpitch,tyaw,0)
                 (T_theta1[5],T_theta2[5],T_theta3[5]) = IK(141.855+tx, 245.7+ty, -140-tz,5,1000,troll,tpitch,-tyaw,0)
-                if ConstrainCheck(T_theta1,T_theta2,T_theta3): SetAngles(T_theta1,T_theta2,T_theta3)
+                T_theta1,T_theta2,T_theta3 = ConstrainCheck(T_theta1,T_theta2,T_theta3)
+                SetAngles(T_theta1,T_theta2,T_theta3)
 
             else:
 
@@ -347,7 +361,8 @@ while 1:
                 (T_theta1[3],T_theta2[3],T_theta3[3]) = IK(-283.71+tx, 0.0+ty, -140-tz,3,0,troll,tpitch,-tyaw,0)
                 (T_theta1[4],T_theta2[4],T_theta3[4]) = IK(-141.855+tx, 245.7+ty, -140-tz,4,0,troll,tpitch,tyaw,0)
                 (T_theta1[5],T_theta2[5],T_theta3[5]) = IK(141.855+tx, 245.7+ty, -140-tz,5,0,troll,tpitch,-tyaw,0)
-                if ConstrainCheck(T_theta1,T_theta2,T_theta3): SetAngles(T_theta1,T_theta2,T_theta3)
+                T_theta1,T_theta2,T_theta3 = ConstrainCheck(T_theta1,T_theta2,T_theta3) 
+                SetAngles(T_theta1,T_theta2,T_theta3)
 
         elif(mode == 1 and startUp == 1):
             stepStartFlag = 0
@@ -375,7 +390,8 @@ while 1:
             (px,py,pz) = FK03_inbody(A_theta1[5],A_theta2[5],A_theta3[5],5)
             (A_theta1[5],A_theta2[5],A_theta3[5]) = IK(px,py,pz,5,0,0,0,0,0)
             
-            if ConstrainCheck(A_theta1,A_theta2,A_theta3): SetAngles(A_theta1,A_theta2,A_theta3)
+            A_theta1,A_theta2,A_theta3 = ConstrainCheck(A_theta1,A_theta2,A_theta3) 
+            SetAngles(A_theta1,A_theta2,A_theta3)
             #mode = 2
 
         elif(mode == 2 and startSetPath == 1 and startUp == 1):
@@ -389,7 +405,7 @@ while 1:
             if(currentmillis - stepStartTimer <= 1000):
 
                 SetNextPathPoint(XPath,YPath,ZPath,TurnPath,1000)
-                #if ConstrainCheck(theta1,theta2,theta3): 
+                theta1,theta2,theta3 = ConstrainCheck(theta1,theta2,theta3) 
                 SetAngles(theta1,theta2,theta3)
                 prevtime = millis()
 
@@ -397,7 +413,7 @@ while 1:
 
                 curtime = millis()
                 SetNextPathPoint(XPath,YPath,ZPath,TurnPath,dt)
-                #if ConstrainCheck(theta1,theta2,theta3): 
+                theta1,theta2,theta3 = ConstrainCheck(theta1,theta2,theta3) 
                 SetAngles(theta1,theta2,theta3)
       
     
