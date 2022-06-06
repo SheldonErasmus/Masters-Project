@@ -20,15 +20,6 @@ class Planner:
         self.pathsize = 7
         self.ang = zeros((1,self.pathsize*2-1))
 
-        """prevtime = time.time()*1000
-        while not rospy.is_shutdown():
-            currenttime = time.time()*1000
-            self.Move.stand(self.BH,2000)
-            self._set_angles(self.Move.theta1, self.Move.theta2, self.Move.theta3)
-            if currenttime - prevtime >= 2000:
-                break
-            rospy.sleep(0.01)""" #Stand
-
         self._th_walk = None
         self.running = False
         self.walking = False
@@ -46,6 +37,7 @@ class Planner:
         self.BH = msg.path_var.BH
         self.Ss = msg.path_var.Ss
         self.Sh = msg.path_var.Sh
+        self.Fh = msg.path_var.Fh
         self.Rd = msg.path_var.Rd
         self.p = msg.path_var.p
         self.r = msg.path_var.r
@@ -55,17 +47,17 @@ class Planner:
         if self.walk_vel != 0:
             tf =  self.Ss/(self.walk_vel*1000) # werk tf uit
             self.dt = tf/(self.pathsize-1)
-            (self.x,self.y,self.z,self.xd,self.yd,self.zd) = self.Move.makepath_walk(self.Ss,self.Sh,self.Rd,self.p,self.r,self.di,self.BH,tf,self.pathsize)
+            (self.x,self.y,self.z,self.xd,self.yd,self.zd) = self.Move.makepath_walk(self.Ss,self.Sh,self.Fh,self.Rd,self.p,self.r,self.di,self.BH,tf,self.pathsize)
             (self.ang,z,self.ang_d,z_d) = self.Move.makepath_turn(self.yaw,0,tf,self.pathsize)
         elif self.walk_vel == 0 and self.yaw != 0:
             tf = 2
             self.dt = tf/(self.pathsize-1)
-            (self.x,self.y,self.z,self.xd,self.yd,self.zd) = self.Move.makepath_walk(0,self.Sh,self.Rd,self.p,self.r,self.di,self.BH,tf,self.pathsize)
+            (self.x,self.y,self.z,self.xd,self.yd,self.zd) = self.Move.makepath_walk(0,self.Sh,self.Fh,self.Rd,self.p,self.r,self.di,self.BH,tf,self.pathsize)
             (self.ang,z,self.ang_d,z_d) = self.Move.makepath_turn(self.yaw,0,tf,self.pathsize)
         else:
             tf = 2
             self.dt = -1
-            (self.x,self.y,self.z,self.xd,self.yd,self.zd) = self.Move.makepath_walk(0,self.Sh,self.Rd,self.p,self.r,self.di,self.BH,tf,self.pathsize)
+            (self.x,self.y,self.z,self.xd,self.yd,self.zd) = self.Move.makepath_walk(0,self.Sh,self.Fh,self.Rd,self.p,self.r,self.di,self.BH,tf,self.pathsize)
             self.z = ones((6,7*2-2))*-self.BH
             (self.ang,z,self.ang_d,z_d) = self.Move.makepath_turn(0,0,tf,self.pathsize)
 

@@ -1,11 +1,13 @@
 from numpy import *
 
 class WalkPath:
-    def __init__(self,Rd,di,Ss,Sh,H,rot,p,r):
+    def __init__(self,Rd,di,Ss,Sh,Fhs,Fhe,H,rot,p,r):
         self.Rd = Rd
         self.dir = di
         self.Ss = Ss
         self.Sh = Sh
+        self.Fhs = Fhs
+        self.Fhe = Fhe
         self.H = H
         self.rot = rot
         self.p = p
@@ -19,8 +21,8 @@ class WalkPath:
 
         di = self.dir - pi
 
-        dhs = self.Ss/2*(tan(self.p)*cos(di)+tan(self.r)*sin(di))
-        dhe = -self.Ss/2*(tan(self.p)*cos(di)+tan(self.r)*sin(di))
+        dhs = self.Ss/2*(tan(self.p)*cos(di)+tan(self.r)*sin(di)) + self.Fhs
+        dhe = -self.Ss/2*(tan(self.p)*cos(di)+tan(self.r)*sin(di)) + self.Fhe
 
         #Start point
         x[0] = self.Rd*cos(self.rot)+(self.Ss/2)*cos(di)
@@ -92,7 +94,7 @@ class WalkPath:
         for i in range((PathSize),(PathSize*2-2)):
             xp[0,i] = xp[0,j]
             yp[0,i] = yp[0,j]
-            zp[0,i] = zp[0,0]
+            zp[0,i] = zp[0,6]
 
             xp_d[0,i] = xp_d[0,j]
             yp_d[0,i] = yp_d[0,j]

@@ -72,6 +72,10 @@ ros::Publisher pub_m_feed17("motor_feedback36", &motor_feedback[17]);
 std_msgs::String logdata;
 ros::Publisher pub_log("LOGDATA", &logdata);
 
+//Feet step
+std_msgs::Float32 FeetOnFloor;
+ros::Publisher pub_FeetOnFloorFlag("/FeetOnFloorFlag", &FeetOnFloor); 
+
 // ** ROS callback & subscriber **
 
 //Change angle of joints subscriber
@@ -272,6 +276,8 @@ void setup()
   nh.advertise(pub_m_feed17);
   //data log publisher
   nh.advertise(pub_log);
+  //Feet step
+  nh.advertise(pub_FeetOnFloorFlag);
   //broadcaster.init(nh);       // set up broadcaster fot tf
   //nh.advertise(pub_eye);   // advertise eye topic
  
@@ -340,6 +346,7 @@ void loop()
         InKin.IK(&T_theta1[3],&T_theta2[3],&T_theta3[3],-283.71+tx,  0.0+ty,    -140-tz,3,1000,troll,tpitch,-tyaw,0);
         InKin.IK(&T_theta1[4],&T_theta2[4],&T_theta3[4],-141.855+tx, 245.7+ty,  -140-tz,4,1000,troll,tpitch,tyaw,0);
         InKin.IK(&T_theta1[5],&T_theta2[5],&T_theta3[5],141.855+tx,  245.7+ty,  -140-tz,5,1000,troll,tpitch,-tyaw,0);
+        ConstrainCheck(T_theta1,T_theta2,T_theta3);
         SetAngles(T_theta1,T_theta2,T_theta3,0,0,0);
       }
       else
@@ -350,6 +357,7 @@ void loop()
         InKin.IK(&T_theta1[3],&T_theta2[3],&T_theta3[3],-283.71+tx,  0.0+ty,    -140-tz,3,0,troll,tpitch,-tyaw,0);
         InKin.IK(&T_theta1[4],&T_theta2[4],&T_theta3[4],-141.855+tx, 245.7+ty,  -140-tz,4,0,troll,tpitch,tyaw,0);
         InKin.IK(&T_theta1[5],&T_theta2[5],&T_theta3[5],141.855+tx,  245.7+ty,  -140-tz,5,0,troll,tpitch,-tyaw,0);
+        ConstrainCheck(T_theta1,T_theta2,T_theta3);
         SetAngles(T_theta1,T_theta2,T_theta3,0,0,0);
       }
     }
@@ -383,7 +391,8 @@ void loop()
 
       FK03_inbody(px,py,pz, A_theta1[5],A_theta2[5],A_theta3[5],5);
       InKin.IK(&A_theta1[5],&A_theta2[5],&A_theta3[5],px,   py,    pz,5,0,0,0,0,0);
-      
+
+      ConstrainCheck(A_theta1,A_theta2,A_theta3);
       SetAngles(A_theta1,A_theta2,A_theta3,20,20,20);
       //mode = 2;
     }
@@ -401,6 +410,7 @@ void loop()
       if(stepStartTimer <= 1000)
       {
         SetNextPathPoint(XPath,YPath,ZPath,TurnPath,1000);
+        ConstrainCheck(theta1,theta2,theta3);
         SetAngles(theta1,theta2,theta3,0,0,0);
         prevtime = millis();
       }
@@ -408,6 +418,7 @@ void loop()
       {
         curtime = millis();
         SetNextPathPoint(XPath,YPath,ZPath,TurnPath,dt);
+        ConstrainCheck(theta1,theta2,theta3);
         SetAngles(theta1,theta2,theta3,0,0,0);
       }
     }
@@ -464,6 +475,12 @@ void SetNextPathPoint(float XP[][Pathsize*2-2],float YP[][Pathsize*2-2],float ZP
         {
           currentPathPoint[i] = currentPathPoint[i] + 1;
         }
+      }
+
+      if(currentPathPoint[0] == 7 && currentPathPoint[1] == 7)
+      {
+        FeetOnFloor.data = 1;
+        pub_FeetOnFloorFlag.publish(&FeetOnFloor); 
       }
     }
   }
@@ -650,4 +667,54 @@ void SetAngles(float* th1,float* th2,float* th3 ,float spd1,float spd2, float sp
   logdata.data = dataStr;
   pub_log.publish(&logdata);
 
+}
+
+void ConstrainCheck(float* th1,float* th2,float* th3)
+{
+  static float prevTh1[6] = {0,0,0,0,0,0};
+  static float prevTh2[6] = {0,0,0,0,0,0};
+  static float prevTh3[6] = {0,0,0,0,0,0};
+  float px = 0, py = 0, pz = 0;
+
+  int LegitMove = 1;
+
+  for(int i = 0;i<6;i++)
+  {
+    if(th3[i] >= 0 || th3[i] < -150/180*M_PI)
+    {
+      LegitMove = 0;
+    }
+
+    if(th2[i] > 60/180*M_PI || th2[i] < -90/180*M_PI)
+    {
+      LegitMove = 0;
+    }
+
+    if(th2[i] > 60/180*M_PI || th2[i] < -90/180*M_PI)
+    {
+      LegitMove = 0;
+    }
+  }
+
+  if(LegitMove == 1)
+  {
+    for(int i = 0;i<6;i++)
+    {
+      prevTh1[i] = th1[i];
+      prevTh2[i] = th2[i];
+      prevTh3[i] = th3[i];
+    }
+  }
+  else if(LegitMove == 0)
+  {
+    for(int i = 0;i<6;i++)
+    {
+      th1[i] = prevTh1[i];
+      th2[i] = prevTh2[i];
+      th3[i] = prevTh3[i];
+
+      FK03_inbody(px,py,pz, th1[i],th2[i],th3[i],i);
+      InKin.IK(&th1[i],&th2[i],&th3[i],px,   py,    pz,i,0,0,0,0,0);
+    }
+  }
 }
