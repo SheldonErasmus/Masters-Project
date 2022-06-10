@@ -1,30 +1,45 @@
-#!/usr/bin/env python3
-
 import signal
 from xbox360controller import Xbox360Controller
 import rospy
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32
+from my_message.msg import PathVar_n_cmdVel
 
 import sys
-sys.path.append("/home/sheldon/catkin_ws/src/AnotherHexapod_stuff/src")
+sys.path.append("/home/devlon/catkin_ws/src/simu_hexapod_stuff/src")
 from hexapodC import HexapodC
 
-flag_a = 0; flag_y = 0; flag_x = 0; flag_b = 0; flag_LB = 0; flag_RB = 0
+flag_a = 0; flag_y = 0; flag_x = 0; flag_b = 0; flag_LB = 0; flag_RB = 0;flag_cam=0;flag_way=0
 mode = 0; mode_selected = -1
 start = 0
 axX =0.0; axY = 0.0; flag_Lstick = 0
 vx = 0.0; vy = 0.0; totV = 0.0
+
+robot = HexapodC()
+rospy.sleep(1)
+
+bh = HexapodC.BH; turnAng = 0.0; FootH = HexapodC.Fh; StepH = HexapodC.Sh
+vx_way = 0; vy_way = 0;z_way = 0
+
+def vel_path_cb(msg):
+    global FootH,StepH,flag_cam,vx_way,z_way,flag_way
+    if msg.Name == 'Camera':
+        flag_cam = 1
+        FootH = msg.path_var.Fh
+        StepH = msg.path_var.Sh
+    if msg.Name == 'Waypoint':
+        flag_way = 1
+        vx_way = msg.linear.x
+        z_way = msg.angular.z
+
+
 
 rospy.init_node('XboxController')
 
 teleop_pub = rospy.Publisher('/cmd_vel',Twist,queue_size=1)
 mode_pub = rospy.Publisher('/mode_selected',Float32,queue_size=1)
 
-robot = HexapodC()
-rospy.sleep(1)
-
-bh = HexapodC.BH; turnAng = 0.0
+rospy.Subscriber('/simple_hexapod/changed_vel_path_var',PathVar_n_cmdVel,vel_path_cb,queue_size=1)
 
 def _map(x, in_min, in_max, out_min, out_max):
     return float((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
@@ -238,7 +253,7 @@ try:
                                 bh = bh - 1
                             if flag_b == 1:
                                 flag_b = 0
-                                turnAng = turnAng + 0.25
+                                turnAng = turnAng + 15
                             elif flag_x == 1:
                                 flag_x = 0
                                 turnAng = turnAng - 0.25
@@ -286,6 +301,14 @@ try:
                             totV = (vx**2+vy**2)**(1/2)
                             print('vx: {0} vy: {1} V: {2}'.format(vx, vy, totV))
                             robot.set_walk_velocity(vx,vy,0)
+
+                    if flag_cam == 1:
+                        robot.set_path_var(Sh = StepH, Fh = FootH)
+                        flag_cam = 0
+
+                    if flag_way == 1:
+                        flag_way = 0
+                        robot.set_walk_velocity(vx_way,vy_way,z_way)
 
             rospy.sleep(0.01)
 except KeyboardInterrupt:

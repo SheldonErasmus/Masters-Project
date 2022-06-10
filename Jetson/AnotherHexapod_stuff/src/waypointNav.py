@@ -9,6 +9,7 @@ from ToEulerAngles import ToEulerAng
 from geometry_msgs.msg import Pose, Point
 import time
 from GenerateMotionProfile import StepProfile
+from my_message.msg import PathVar_n_cmdVel
 from marvelmind_nav.msg import hedge_pos_ang,marvelmind_waypoint,hedge_imu_fusion
 
 #Global variables
@@ -59,11 +60,15 @@ if __name__ == '__main__':
     rospy.init_node("WayP_Nav")
 
     robot = HexapodC()
-    stepP = StepProfile(0.1)
+    stepP = StepProfile(0.1,150)
     
     subIndoorGPS = rospy.Subscriber("hedge_pos_ang", hedge_pos_ang, hedge_pos_ang_callback, queue_size=1)
     subIMU = rospy.Subscriber("hedge_imu_fusion", hedge_imu_fusion, imu_cb, queue_size=1)
     rospy.Subscriber("marvelmind_waypoint", marvelmind_waypoint, marvelmind_waypoint_callback, queue_size=1) 
+    pub = rospy.Publisher('/simple_hexapod/changed_vel_path_var', PathVar_n_cmdVel,queue_size=1)
+
+    PathVelmsg = PathVar_n_cmdVel()
+    PathVelmsg.Name = "Waypoint"
 
     Esrc = float(input("Enter Esrc: "))
     Nsrc = float(input("Enter Nsrc: ") )
@@ -79,7 +84,7 @@ if __name__ == '__main__':
     ct = array([[cos(Head_t), sin(Head_t)],[-sin(Head_t), cos(Head_t)]]) @ array([[n-Nsrc],[e-Esrc]])
     startPos = ct[0]
 
-    stepP.GenerateProfile(startPos,L_t,150)
+    #stepP.GenerateProfile(startPos,L_t,0)
     TrapezstartTime = time.time()
 
     while not rospy.is_shutdown():
@@ -87,8 +92,6 @@ if __name__ == '__main__':
         currTime = time.time()
         stepTime = currTime - prevTime
         prevTime = currTime
-
-        #robot.set_path_var(p=hex_pitch,r=hex_roll)
 
         if flag == 1:
             ct = array([[cos(Head_t), sin(Head_t)],[-sin(Head_t), cos(Head_t)]]) @ array([[n-Nsrc],[e-Esrc]])
@@ -103,18 +106,21 @@ if __name__ == '__main__':
             Head_ref = Head_t + Ky*err_ref
             Head_command = -(Head_ref - curr_Head_hex)
 
-            stepP.GenerateProfile(ct_dist,L_t,150-(time.time()-TrapezstartTime))
+            stepP.GenerateProfile(ct_dist,L_t,(time.time()-TrapezstartTime))
             xdot = stepP.F(time.time()-TrapezstartTime)
             V_hexTot = xdot
 
             if abs(Head_command*180/pi) >= 15:
-                robot.set_walk_velocity(V_hexTot,0,copysign(15,Head_command))
+                PathVelmsg.linear.x=V_hexTot; PathVelmsg.angular.z=copysign(15,Head_command)
+                pub.publish(PathVelmsg)
             else:
-                robot.set_walk_velocity(V_hexTot,0,Head_command*180/pi)
+                PathVelmsg.linear.x=V_hexTot; PathVelmsg.angular.z=Head_command*180/pi
+                pub.publish(PathVelmsg)
             
         else:
             if flag == 1:
-                robot.set_walk_velocity(0.0,0,0)
+                PathVelmsg.linear.x=0; PathVelmsg.angular.z=0
+                pub.publish(PathVelmsg)
                 Esrc = Edest
                 Nsrc = Ndest
                 Edest = float(input("Enter new Edest: "))
@@ -125,18 +131,21 @@ if __name__ == '__main__':
 
             if abs(Head_t - curr_Head_hex) > 0.01:
                 if abs((Head_t - curr_Head_hex)*180/pi) >= 15:
-                    robot.set_walk_velocity(0.0,0,copysign(15,-(Head_t - curr_Head_hex)))
+                    PathVelmsg.linear.x=0; PathVelmsg.angular.z=copysign(15,-(Head_t - curr_Head_hex))
+                    pub.publish(PathVelmsg)
                 else:
-                    robot.set_walk_velocity(0.0,0,-(Head_t - curr_Head_hex)*180/pi)
+                    PathVelmsg.linear.x=0; PathVelmsg.angular.z=-(Head_t - curr_Head_hex)*180/pi
+                    pub.publish(PathVelmsg)
             else:
-                robot.set_walk_velocity(0.0,0,0)
+                PathVelmsg.linear.x=0; PathVelmsg.angular.z=0
+                pub.publish(PathVelmsg)
                 L_t = sqrt((Ndest-Nsrc)**2+(Edest-Esrc)**2)
                 flag = 1
 
-                ct = array([[cos(Head_t), sin(Head_t)],[-sin(Head_t), cos(Head_t)]]) @ array([[n-Nsrc],[e-Esrc]])
-                startPos = ct[0]
+                #ct = array([[cos(Head_t), sin(Head_t)],[-sin(Head_t), cos(Head_t)]]) @ array([[n-Nsrc],[e-Esrc]])
+                #startPos = ct[0]
 
-                stepP.GenerateProfile(startPos,L_t,150)
+                #stepP.GenerateProfile(startPos,L_t,150)
                 TrapezstartTime = time.time()
 
         rospy.sleep(0.1) 
