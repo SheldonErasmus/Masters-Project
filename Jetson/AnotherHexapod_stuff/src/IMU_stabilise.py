@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from math import pi
 import rospy
 from hexapodC import HexapodC
 from ToEulerAngles import ToEulerAng
@@ -30,10 +31,10 @@ class PIDcontroller:
 
         d0 = (2*self.Kd*(e0-self.e1) + (2*self.tau-self.T)*self.d1)/(2*self.tau+self.T)
 
-        if i0 > 10:
-            i0 = 10
-        elif i0 < -10:
-            i0 = -10
+        # if i0 > 10:
+        #     i0 = 10
+        # elif i0 < -10:
+        #     i0 = -10
 
         self.u = p0 + i0 + d0
 
@@ -52,12 +53,12 @@ def imu_cb(msg):
     global measure_roll,measure_pitch,roll_input,pitch_input
     (measure_roll,measure_pitch,yaw) = ToEulerAng(msg.qx,msg.qy,msg.qz,msg.qw)
 
-    roll_input = rollController.PIDUpdate(ref_roll,measure_roll)
-    pitch_input = pitchController.PIDUpdate(ref_pitch,measure_pitch)
+    roll_input = rollController.PIDUpdate(ref_roll,measure_roll*180/pi)
+    pitch_input = pitchController.PIDUpdate(ref_pitch,measure_pitch*180/pi)
 
     pubRollPitch.publish(x = pitch_input,y=-roll_input)
 
-    #print(measure_roll,measure_pitch)
+    #print(measure_roll*180/pi,measure_pitch*180/pi)
     print(roll_input)
 
 if __name__ == '__main__':

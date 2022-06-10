@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import signal
 from xbox360controller import Xbox360Controller
 import rospy
@@ -6,7 +8,7 @@ from std_msgs.msg import Float32
 from my_message.msg import PathVar_n_cmdVel
 
 import sys
-sys.path.append("/home/devlon/catkin_ws/src/simu_hexapod_stuff/src")
+sys.path.append("/home/sheldon/catkin_ws/src/AnotherHexapod_stuff/src")
 from hexapodC import HexapodC
 
 flag_a = 0; flag_y = 0; flag_x = 0; flag_b = 0; flag_LB = 0; flag_RB = 0;flag_cam=0;flag_way=0

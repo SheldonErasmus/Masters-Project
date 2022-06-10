@@ -680,17 +680,17 @@ void ConstrainCheck(float* th1,float* th2,float* th3)
 
   for(int i = 0;i<6;i++)
   {
-    if(th3[i] >= 0 || th3[i] < -150/180*M_PI)
+    if((th3[i] > 0.0) || (th3[i] < -150.0/180.0*M_PI))
     {
       LegitMove = 0;
     }
 
-    if(th2[i] > 60/180*M_PI || th2[i] < -90/180*M_PI)
+    if((th2[i] > 60.0/180.0*M_PI) || (th2[i] < -90.0/180.0*M_PI))
     {
       LegitMove = 0;
     }
 
-    if(th2[i] > 60/180*M_PI || th2[i] < -90/180*M_PI)
+    if((th1[i] > 50.0/180.0*M_PI) || (th1[i] < -50.0/180.0*M_PI))
     {
       LegitMove = 0;
     }
