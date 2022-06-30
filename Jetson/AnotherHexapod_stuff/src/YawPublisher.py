@@ -9,7 +9,7 @@ n_prev = 0.0
 e_prev = 0.0
 d_prev = 0.0
 
-n_cur=0; e_cur=0; d_cur=0; Yaw_meas_pair=0; Flag=0; counter = 98
+n_cur=0; e_cur=0; d_cur=0; Yaw_meas_pair=0; Flag=0; counter = 23
 
 def hedge_pos_ang_callback(msg):
     global n_prev, e_prev, d_prev, n_cur, e_cur, d_cur, Yaw_meas_pair, Flag, counter
@@ -52,7 +52,7 @@ def imu_cb(msg):
 
     n_difference = n_cur-n_prev
     e_difference = e_cur-e_prev
-    if abs(n_difference) > 200 or abs(e_difference) > 200: 
+    if abs(n_difference) >= 200 or abs(e_difference) >= 200: 
         Yaw_meas = atan2(n_difference,e_difference)*180/pi
         dif1 = Yaw_meas - Est_yaw_cur
         if abs(dif1)>180:

@@ -17,6 +17,7 @@ n_prev = 0.0
 e_prev = 0.0
 d_prev = 0.0
 curr_Head_hex = 0.0; hex_roll = 0.0; hex_pitch = 0.0
+Head_ref = 0.0; Head_command = 0.0
 
 n_cur=0; e_cur=0; d_cur=0; Yaw_meas_pair=0; Flag=0; counter = 98
 index=0; total_items=0; movement_type=0; Epoints=0; Npoints=0; DoWaypointFlag=0
@@ -109,6 +110,9 @@ def NavMode_cb(msg):
 if __name__ == '__main__':
     rospy.init_node("WayP_Nav")
 
+    fileName = 'WayPointdataRec.csv'
+    file = open(fileName,"w")
+    file.write("e_point,n_point,e_cur,n_cur,Cur_head,Head_ref,Head_command\n")
 
     stepP = StepProfile(0.1,80)
     
@@ -221,11 +225,11 @@ if __name__ == '__main__':
                 Desired_Head = float(input("Enter desired heading: "))*pi/180
                 #Desired_Head = Desired_Head-2*pi if Desired_Head>pi else Desired_Head 
             Gain = 1
-            ref_head = Desired_Head
+            Head_ref = Desired_Head
             #cur_yaw_adjusted = 90-Cor_yaw_cur-360 if 90-Cor_yaw_cur>180 else 90-Cor_yaw_cur
             cur_yaw_adjusted = Cor_yaw_cur
             print(cur_yaw_adjusted)
-            Head_command = Gain*(ref_head - (cur_yaw_adjusted)*pi/180)
+            Head_command = Gain*(Head_ref - (cur_yaw_adjusted)*pi/180)
 
             if abs(Head_command) > pi:
                 Head_command = Head_command - copysign(2*pi,Head_command)
@@ -317,6 +321,9 @@ if __name__ == '__main__':
                     flag = 1
                     TrapezstartTime = time.time()
 
+        file.write(str(Epoints) + "," + str(Npoints) + "," + str(e_cur) + "," + str(n_cur) + "," + str(Cor_yaw_cur) + "," + str(Head_ref) + "," + str(Head_command) + "\n")
         rospy.sleep(0.1) 
+
+    file.close()
 
 

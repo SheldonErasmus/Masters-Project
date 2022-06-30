@@ -78,7 +78,7 @@ def FeetOnFloor_cb(msg):
 yaw=0
 def yaw_cb(msg):
     global yaw
-    yaw = msg.data
+    yaw = msg.data*pi/180
 
 if __name__ == '__main__':
 

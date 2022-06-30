@@ -49,10 +49,12 @@ class PIDcontroller:
 measure_roll = 0.0; measure_pitch = 0.0
 ref_roll = 0.0; ref_pitch = 0.0
 roll_input = 0.0; pitch_input = 0.0
+timestamp = 0.0
 
 def imu_cb(msg):
-    global measure_roll,measure_pitch,roll_input,pitch_input,IMU_toggle
+    global measure_roll,measure_pitch,roll_input,pitch_input,IMU_toggle, timestamp
     (measure_roll,measure_pitch,yaw) = ToEulerAng(msg.qx,msg.qy,msg.qz,msg.qw)
+    timestamp = msg.timestamp_ms
 
     if mode == 2 and IMU_toggle == 1: 
         roll_input = rollController.PIDUpdate(ref_roll,measure_roll*180/pi)
@@ -93,7 +95,15 @@ if __name__ == '__main__':
     
     robot = HexapodC()
 
-    while not rospy.is_shutdown():
-        rospy.sleep(0.01)
+    fileName = 'IMUdataRec2.csv'
+    try:
+        with open(fileName,"w") as file:
+            file.write("timestamp,roll_input,pitch_input,measure_roll,measure_pitch\n")
+
+            while not rospy.is_shutdown():
+                file.write(str(timestamp) + "," + str(roll_input) + "," + str(pitch_input) + "," + str(measure_roll*180/pi) + "," + str(measure_pitch*180/pi) + "\n")
+                rospy.sleep(0.01)
+    except KeyboardInterrupt:
+        pass
 
 
