@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import rospy
-from hexapodC import HexapodC
 from sensor_msgs.msg import NavSatFix, Imu
 from math import atan2, sqrt, cos, sin, pi, copysign
 from numpy import array
@@ -11,12 +10,9 @@ import time
 from GenerateMotionProfile import StepProfile
 from my_message.msg import PathVar_n_cmdVel
 from marvelmind_nav.msg import hedge_pos_ang,marvelmind_waypoint,hedge_imu_fusion, hedge_imu_raw
+from std_msgs.msg import Float32
 
 #Global variables
-startupFlag = 1
-refLat = 0.0
-refLon = 0.0
-refAlt = 0.0
 n_prev = 0.0
 e_prev = 0.0
 d_prev = 0.0
@@ -80,6 +76,10 @@ def imu_cb(msg):
     Est_yaw_next = Cor_yaw_cur + Ts*Gyro_z
     print(Cor_yaw_cur)
 
+def yaw_cb(msg):
+    global Cor_yaw_cur
+    Cor_yaw_cur = msg.data
+
 def marvelmind_waypoint_callback(msg):
     global total_items, movement_type, Epoints, Npoints, DoWaypointFlag
 
@@ -102,13 +102,14 @@ def marvelmind_waypoint_callback(msg):
 if __name__ == '__main__':
     rospy.init_node("WayP_Nav")
 
-    robot = HexapodC()
+
     stepP = StepProfile(0.1,150)
     
     subIndoorGPS = rospy.Subscriber("hedge_pos_ang", hedge_pos_ang, hedge_pos_ang_callback, queue_size=1)
-    rospy.wait_for_message("hedge_pos_ang", hedge_pos_ang)
-    Est_yaw_next = Yaw_meas_pair
-    subIMU = rospy.Subscriber("hedge_imu_raw", hedge_imu_raw, imu_cb, queue_size=1)
+    # rospy.wait_for_message("hedge_pos_ang", hedge_pos_ang)
+    # Est_yaw_next = Yaw_meas_pair
+    # subIMU = rospy.Subscriber("hedge_imu_raw", hedge_imu_raw, imu_cb, queue_size=1)
+    subyaw = rospy.Subscriber('/simple_hexapod/calculated_yaw', Float32, yaw_cb, queue_size=1)
     rospy.Subscriber("marvelmind_waypoint", marvelmind_waypoint, marvelmind_waypoint_callback, queue_size=1) 
     pub = rospy.Publisher('/simple_hexapod/changed_vel_path_var', PathVar_n_cmdVel,queue_size=1)
 

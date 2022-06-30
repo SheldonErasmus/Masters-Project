@@ -176,6 +176,7 @@ float ZPath[6][Pathsize*2-2];
 float TurnPath[Pathsize*2-2];
 float dt=0;
 int startSetPath = 0;
+int standBegin = 0;
 void legpath_cb(const my_message::LegPath& msg)
 {
 
@@ -208,6 +209,7 @@ void legpath_cb(const my_message::LegPath& msg)
   }
 
   startSetPath = 1;
+  standBegin = 1; 
 
 }
 ros::Subscriber<my_message::LegPath> rosSubPATH("/simple_hexapod/Legs_paths", legpath_cb);
@@ -323,7 +325,11 @@ void loop()
       InKin.IK(&theta1[4],&theta2[4],&theta3[4],-141.855, 245.7,  -140,4,0,0,0,0,0);
       InKin.IK(&theta1[5],&theta2[5],&theta3[5],141.855,  245.7,  -140,5,0,0,0,0,0);
       SetAngles(theta1,theta2,theta3,10,10,10);
-      if(currentmillis - startUp_startTime >= 5000) startUp = 1;
+      if(currentmillis - startUp_startTime >= 5000) 
+      {
+        startUp = 1;
+        standBegin = 0;
+      }
     }
 
     //Teleop demo Mode
@@ -346,8 +352,10 @@ void loop()
         InKin.IK(&T_theta1[3],&T_theta2[3],&T_theta3[3],-283.71+tx,  0.0+ty,    -140-tz,3,1000,troll,tpitch,-tyaw,0);
         InKin.IK(&T_theta1[4],&T_theta2[4],&T_theta3[4],-141.855+tx, 245.7+ty,  -140-tz,4,1000,troll,tpitch,tyaw,0);
         InKin.IK(&T_theta1[5],&T_theta2[5],&T_theta3[5],141.855+tx,  245.7+ty,  -140-tz,5,1000,troll,tpitch,-tyaw,0);
-        ConstrainCheck(T_theta1,T_theta2,T_theta3);
-        SetAngles(T_theta1,T_theta2,T_theta3,0,0,0);
+        if(ConstrainCheck01(T_theta1,T_theta2,T_theta3))
+        {
+          SetAngles(T_theta1,T_theta2,T_theta3,0,0,0);
+        }
       }
       else
       {
@@ -357,8 +365,10 @@ void loop()
         InKin.IK(&T_theta1[3],&T_theta2[3],&T_theta3[3],-283.71+tx,  0.0+ty,    -140-tz,3,0,troll,tpitch,-tyaw,0);
         InKin.IK(&T_theta1[4],&T_theta2[4],&T_theta3[4],-141.855+tx, 245.7+ty,  -140-tz,4,0,troll,tpitch,tyaw,0);
         InKin.IK(&T_theta1[5],&T_theta2[5],&T_theta3[5],141.855+tx,  245.7+ty,  -140-tz,5,0,troll,tpitch,-tyaw,0);
-        ConstrainCheck(T_theta1,T_theta2,T_theta3);
-        SetAngles(T_theta1,T_theta2,T_theta3,0,0,0);
+        if(ConstrainCheck01(T_theta1,T_theta2,T_theta3))
+        {
+          SetAngles(T_theta1,T_theta2,T_theta3,0,0,0);
+        }
       }
     }
 
@@ -392,8 +402,10 @@ void loop()
       FK03_inbody(px,py,pz, A_theta1[5],A_theta2[5],A_theta3[5],5);
       InKin.IK(&A_theta1[5],&A_theta2[5],&A_theta3[5],px,   py,    pz,5,0,0,0,0,0);
 
-      ConstrainCheck(A_theta1,A_theta2,A_theta3);
-      SetAngles(A_theta1,A_theta2,A_theta3,20,20,20);
+      if(ConstrainCheck01(A_theta1,A_theta2,A_theta3))
+      {
+        SetAngles(A_theta1,A_theta2,A_theta3,20,20,20);
+      }
       //mode = 2;
     }
     
@@ -401,16 +413,17 @@ void loop()
     else if(mode == 2 && startSetPath == 1 && startUp == 1)
     {
       kinematicModeStartFlag = 0;
-      static elapsedMillis stepStartTimer;
-	    if (stepStartFlag == 0)
+      static elapsedMillis stepStartTimer = 1001;
+	    if (stepStartFlag == 0 && standBegin == 1)
 	    {
 	      stepStartTimer = 0;
 	      stepStartFlag = 1;
+        standBegin = 0;
       }
       if(stepStartTimer <= 1000)
       {
         SetNextPathPoint(XPath,YPath,ZPath,TurnPath,1000);
-        ConstrainCheck(theta1,theta2,theta3);
+        ConstrainCheck2(theta1,theta2,theta3);
         SetAngles(theta1,theta2,theta3,0,0,0);
         prevtime = millis();
       }
@@ -418,7 +431,7 @@ void loop()
       {
         curtime = millis();
         SetNextPathPoint(XPath,YPath,ZPath,TurnPath,dt);
-        ConstrainCheck(theta1,theta2,theta3);
+        ConstrainCheck2(theta1,theta2,theta3);
         SetAngles(theta1,theta2,theta3,0,0,0);
       }
     }
@@ -477,7 +490,7 @@ void SetNextPathPoint(float XP[][Pathsize*2-2],float YP[][Pathsize*2-2],float ZP
         }
       }
 
-      if(currentPathPoint[0] == 7 && currentPathPoint[1] == 7)
+      if(currentPathPoint[0] == 7 || currentPathPoint[1] == 7)
       {
         FeetOnFloor.data = 1;
         pub_FeetOnFloorFlag.publish(&FeetOnFloor); 
@@ -486,15 +499,6 @@ void SetNextPathPoint(float XP[][Pathsize*2-2],float YP[][Pathsize*2-2],float ZP
   }
   else
   {
-//    for(int i = 0;i<6;i++)
-//    {
-//      x = XP[i][currentPathPoint[i]];
-//      y = YP[i][currentPathPoint[i]];
-//      z = ZP[i][currentPathPoint[i]];
-//      yaww = TurnP[currentPathPoint_tw[i%2]];
-//  
-//      InKin.IK(&theta1[i],&theta2[i],&theta3[i],x,y,z,i,500,0,0,yaww);
-//    }
     for(int i = 0;i<6;i++)
     {
       currentPathPoint_tw[i%2] = 3;
@@ -502,6 +506,19 @@ void SetNextPathPoint(float XP[][Pathsize*2-2],float YP[][Pathsize*2-2],float ZP
     }
     prevtime = curtime;
     stepStartFlag = 0;
+
+    if(standBegin == 0)
+    {
+      for(int i = 0;i<6;i++)
+      {
+        x = XP[i][currentPathPoint[i]];
+        y = YP[i][currentPathPoint[i]];
+        z = -140.0;
+        yaww = TurnP[currentPathPoint_tw[i%2]];
+    
+        InKin.IK(&theta1[i],&theta2[i],&theta3[i],x,y,z,i,1000,rollInput,pitchInput,yaww);
+      }
+    }
   }
 }
 
@@ -669,7 +686,31 @@ void SetAngles(float* th1,float* th2,float* th3 ,float spd1,float spd2, float sp
 
 }
 
-void ConstrainCheck(float* th1,float* th2,float* th3)
+int ConstrainCheck01(float* th1,float* th2,float* th3)
+{
+  int LegitMove = 1;
+
+  for(int i = 0;i<6;i++)
+  {
+    if((th3[i] > 0.0) || (th3[i] < -150.0/180.0*M_PI))
+    {
+      LegitMove = 0;
+    }
+
+    if((th2[i] > 60.0/180.0*M_PI) || (th2[i] < -90.0/180.0*M_PI))
+    {
+      LegitMove = 0;
+    }
+
+    if((th1[i] > 50.0/180.0*M_PI) || (th1[i] < -50.0/180.0*M_PI))
+    {
+      LegitMove = 0;
+    }
+  }
+  return LegitMove;
+}
+
+void ConstrainCheck2(float* th1,float* th2,float* th3)
 {
   static float prevTh1[6] = {0,0,0,0,0,0};
   static float prevTh2[6] = {0,0,0,0,0,0};

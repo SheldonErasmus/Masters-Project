@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import signal
 from xbox360controller import Xbox360Controller
 import rospy
 from geometry_msgs.msg import Twist
@@ -12,7 +11,7 @@ sys.path.append("/home/sheldon/catkin_ws/src/AnotherHexapod_stuff/src")
 from hexapodC import HexapodC
 
 flag_a = 0; flag_y = 0; flag_x = 0; flag_b = 0; flag_LB = 0; flag_RB = 0;flag_cam=0;flag_way=0
-mode = 0; mode_selected = -1
+mode = 0; mode_selected = -1; IMU_toggle = 0; CAM_toggle = 0  
 start = 0
 axX =0.0; axY = 0.0; flag_Lstick = 0
 vx = 0.0; vy = 0.0; totV = 0.0
@@ -34,14 +33,20 @@ def vel_path_cb(msg):
         vx_way = msg.linear.x
         z_way = msg.angular.z
 
-
+def stopwalking():
+    robot.set_walk_velocity(0,0,0)
+    IMU_toggle_pub.publish(0)
+    rospy.sleep(1)
 
 rospy.init_node('XboxController')
 
 teleop_pub = rospy.Publisher('/cmd_vel',Twist,queue_size=1)
 mode_pub = rospy.Publisher('/mode_selected',Float32,queue_size=1)
+IMU_toggle_pub = rospy.Publisher('/IMU_toggle',Float32,queue_size=1)
 
 rospy.Subscriber('/simple_hexapod/changed_vel_path_var',PathVar_n_cmdVel,vel_path_cb,queue_size=1)
+
+rospy.on_shutdown(stopwalking)
 
 def _map(x, in_min, in_max, out_min, out_max):
     return float((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
@@ -113,7 +118,7 @@ def on_mode_button_released(button):
 def on_select_button_pressed(button):
     #print('Button {0} was pressed'.format(button.name))
     global mode_selected
-    if totV == 0.0:
+    if totV == 0.0 and IMU_toggle == 0:
         mode_selected = mode
         print('mode selected: {0}'.format(mode_selected))
         mode_pub.publish(data=mode_selected)
@@ -127,6 +132,8 @@ def on_start_button_pressed(button):
     if start == 0:
         start = 1
         mode_pub.publish(data=-1)
+        robot.set_walk_velocity(0,0,0)
+        IMU_toggle_pub.publish(-1)
 def on_start_button_released(button):
     #print('Button {0} was released'.format(button.name))
     pass
@@ -137,6 +144,20 @@ def on_Laxis_moved(axis):
     axY = axis.x
     flag_Lstick = 1
     
+def on_left_stick_pressed(stick):
+    global IMU_toggle
+    IMU_toggle = 1 if IMU_toggle == 0 else 0
+    IMU_toggle_pub.publish(IMU_toggle)
+def on_left_stick_released(stick):
+    pass
+
+def on_right_stick_pressed(stick):
+    global CAM_toggle
+    CAM_toggle = 1 if CAM_toggle == 0 else 0
+    if CAM_toggle == 0:
+        robot.set_path_var(Sh = [50, 50, 50, 50, 50, 50], Fh = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
+def on_right_stick_released(stick):
+    pass
 
 try:
     with Xbox360Controller(0, axis_threshold=0.2) as controller:
@@ -166,13 +187,18 @@ try:
         controller.button_start.when_pressed = on_start_button_pressed
         controller.button_start.when_released = on_start_button_released
 
+        controller.button_thumb_l.when_pressed = on_left_stick_pressed
+        controller.button_thumb_l.when_released = on_left_stick_released
+
+        controller.button_thumb_r.when_pressed = on_right_stick_pressed
+        controller.button_thumb_r.when_released = on_right_stick_released
 
         # Left and right axis move event
         controller.axis_l.when_moved = on_Laxis_moved
         #controller.axis_r.when_moved = on_axis_moved
 
         #signal.pause()
-        while not rospy.is_shutdown():
+        while not rospy.is_shutdown() and controller._event_thread.is_alive():
             
             if start == 1:
                 if mode_selected == 0:
@@ -302,9 +328,9 @@ try:
 
                             totV = (vx**2+vy**2)**(1/2)
                             print('vx: {0} vy: {1} V: {2}'.format(vx, vy, totV))
-                            robot.set_walk_velocity(vx,vy,0)
+                            robot.set_walk_velocity(vx,vy,turnAng)
 
-                    if flag_cam == 1:
+                    if flag_cam == 1 and CAM_toggle == 1:
                         robot.set_path_var(Sh = StepH, Fh = FootH)
                         flag_cam = 0
 
@@ -315,3 +341,5 @@ try:
             rospy.sleep(0.01)
 except KeyboardInterrupt:
     pass
+except:
+    print("no")

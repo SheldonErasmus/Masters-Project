@@ -2,12 +2,32 @@
 
     <node pkg = "AnotherHexapod_stuff" type = "PlannerV1.py" name = "planner" output="screen" launch-prefix="gnome-terminal --" > </node>
 
-    <node pkg = "xboxcontrollerpkg" type = "contr.py" name = "XboxController" output="screen" launch-prefix="gnome-terminal --" > </node>
+    <node pkg = "xboxcontrollerpkg" type = "contr.py" name = "XboxController" output="screen" > </node>
 
     <arg name = "port" default = "/dev/Arduino_port" />
     <node pkg = "rosserial_python" type = "serial_node.py" name = "serial_node" output="screen" launch-prefix="gnome-terminal --" > 
         <param name = "port" value = "$(arg port)" />
-
+	    <param name = "baud" value = "115200" />
     </node>
+
+    <node pkg = "marvelmind_nav" type = "hedge_rcv_bin" name = "hedge_rcv_bin" output="screen" launch-prefix="gnome-terminal --" > 
+	    <param name = "port" value = "/dev/SUPERBEACON_053824" />
+    </node>
+
+    <node pkg = "AnotherHexapod_stuff" type = "IMU_stabilise.py" name = "IMU_stabilise" output="screen" launch-prefix="gnome-terminal --" > </node>
+
+    <node pkg = "AnotherHexapod_stuff" type = "YawPublisher.py" name = "YawPub" output="screen" launch-prefix="gnome-terminal --" > </node>
+
+    <node pkg = "AnotherHexapod_stuff" type = "waypointNav.py" name = "WayP_Nav" output="screen" launch-prefix="gnome-terminal --" > </node>
+
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+        <arg name="initial_reset" value="true" />
+        <arg name="enable_gyro" value="true" /> 
+        <arg name="enable_accel" value="true" />
+    </include>
+
+    <node pkg = "AnotherHexapod_stuff" type = "WorldFeetPositions_V2.py" name = "WorldFootPos" output="screen" launch-prefix="gnome-terminal --" > </node>
+
+    <node pkg = "AnotherHexapod_stuff" type = "cameraAdaptation.py" name = "Camera_terrain_adaptation" output="screen" launch-prefix="gnome-terminal --" > </node>
 
 </launch>
