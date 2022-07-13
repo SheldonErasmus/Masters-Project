@@ -10,7 +10,7 @@ sys.path.append("/home/devlon/catkin_ws/src/simu_hexapod_stuff/src")
 from hexapodC import HexapodC
 
 flag_a = 0; flag_y = 0; flag_x = 0; flag_b = 0; flag_LB = 0; flag_RB = 0;flag_cam=0;flag_way=0
-mode = 0; mode_selected = -1
+mode = 0; mode_selected = -1; IMU_toggle = 0  
 start = 0
 axX =0.0; axY = 0.0; flag_Lstick = 0
 vx = 0.0; vy = 0.0; totV = 0.0
@@ -38,6 +38,7 @@ rospy.init_node('XboxController')
 
 teleop_pub = rospy.Publisher('/cmd_vel',Twist,queue_size=1)
 mode_pub = rospy.Publisher('/mode_selected',Float32,queue_size=1)
+IMU_toggle_pub = rospy.Publisher('/IMU_toggle',Float32,queue_size=1)
 
 rospy.Subscriber('/simple_hexapod/changed_vel_path_var',PathVar_n_cmdVel,vel_path_cb,queue_size=1)
 
@@ -111,7 +112,7 @@ def on_mode_button_released(button):
 def on_select_button_pressed(button):
     #print('Button {0} was pressed'.format(button.name))
     global mode_selected
-    if totV == 0.0:
+    if totV == 0.0 and IMU_toggle == 0:
         mode_selected = mode
         print('mode selected: {0}'.format(mode_selected))
         mode_pub.publish(data=mode_selected)
@@ -125,6 +126,7 @@ def on_start_button_pressed(button):
     if start == 0:
         start = 1
         mode_pub.publish(data=-1)
+        robot.set_walk_velocity(0,0,0)
 def on_start_button_released(button):
     #print('Button {0} was released'.format(button.name))
     pass
@@ -134,7 +136,13 @@ def on_Laxis_moved(axis):
     axX = -axis.y
     axY = axis.x
     flag_Lstick = 1
-    
+  
+def on_left_stick_pressed(stick):
+    global IMU_toggle
+    IMU_toggle = 1 if IMU_toggle == 0 else 0
+    IMU_toggle_pub.publish(IMU_toggle)
+def on_left_stick_released(stick):
+    pass
 
 try:
     with Xbox360Controller(0, axis_threshold=0.2) as controller:
@@ -164,13 +172,14 @@ try:
         controller.button_start.when_pressed = on_start_button_pressed
         controller.button_start.when_released = on_start_button_released
 
-
+        controller.button_thumb_l.when_pressed = on_left_stick_pressed
+        controller.button_thumb_l.when_released = on_left_stick_released
         # Left and right axis move event
         controller.axis_l.when_moved = on_Laxis_moved
         #controller.axis_r.when_moved = on_axis_moved
 
         #signal.pause()
-        while not rospy.is_shutdown():
+        while not rospy.is_shutdown() and controller._event_thread.is_alive():
             
             if start == 1:
                 if mode_selected == 0:

@@ -7,6 +7,7 @@ from ToEulerAngles import ToEulerAng
 import time
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Vector3
+from std_msgs.msg import Float32
 
 class PIDcontroller:
     def __init__(self,Kp,Ki,Kd,tau,T):
@@ -48,13 +49,29 @@ def imu_cb(msg):
     global measure_roll,measure_pitch,roll_input,pitch_input
     (measure_roll,measure_pitch,yaw) = ToEulerAng(msg.orientation.x,msg.orientation.y,msg.orientation.z,msg.orientation.w)
 
-    roll_input = rollController.PIDUpdate(ref_roll,measure_roll*180/pi)
-    pitch_input = pitchController.PIDUpdate(ref_pitch,measure_pitch*180/pi)
-
-    pubRollPitch.publish(x = pitch_input,y=-roll_input)
+    if mode == 2 and IMU_toggle == 1: 
+        roll_input = rollController.PIDUpdate(ref_roll,measure_roll*180/pi)
+        pitch_input = pitchController.PIDUpdate(ref_pitch,measure_pitch*180/pi)
+        pubRollPitch.publish(x = pitch_input,y=-roll_input)
+    elif IMU_toggle == 0:
+        roll_input0 = rollController.PIDUpdate(-roll_input,measure_roll*180/pi)
+        pitch_input0 = pitchController.PIDUpdate(-pitch_input,measure_pitch*180/pi)
+        pubRollPitch.publish(x = pitch_input0,y=-roll_input0)
 
     #print(measure_roll,measure_pitch)
     print(roll_input)
+
+mode = -1
+def modeSelect_cb(msg):
+    global mode
+    mode = msg.data
+rosSubModeSelect = rospy.Subscriber("/mode_selected", Float32,modeSelect_cb)
+
+IMU_toggle = -1
+def IMU_toggle_cb(msg):
+    global IMU_toggle
+    IMU_toggle = msg.data
+rosSubModeSelect = rospy.Subscriber("/IMU_toggle", Float32,IMU_toggle_cb)
 
 if __name__ == '__main__':
 
