@@ -114,9 +114,9 @@ if __name__ == '__main__':
 
     rospy.wait_for_message('WorldFeetPlace',WorldFeetPlace)
     
-    H = 300 #height of cam
-    L = 0 #X offset of cam
-    CA = 40 #cam angle
+    H = 150 #height of cam
+    L = 55 #X offset of cam
+    CA = 30 #cam angle
     LI = 17.5 #Left imager offset
     
     HL = np.sqrt(H**2+L**2) #slope of offsets

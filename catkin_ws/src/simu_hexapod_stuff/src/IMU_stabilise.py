@@ -46,7 +46,7 @@ ref_roll = 0.0; ref_pitch = 0.0
 roll_input = 0.0; pitch_input = 0.0
 
 def imu_cb(msg):
-    global measure_roll,measure_pitch,roll_input,pitch_input
+    global measure_roll,measure_pitch,roll_input,pitch_input,IMU_toggle
     (measure_roll,measure_pitch,yaw) = ToEulerAng(msg.orientation.x,msg.orientation.y,msg.orientation.z,msg.orientation.w)
 
     if mode == 2 and IMU_toggle == 1: 
@@ -57,6 +57,10 @@ def imu_cb(msg):
         roll_input0 = rollController.PIDUpdate(-roll_input,measure_roll*180/pi)
         pitch_input0 = pitchController.PIDUpdate(-pitch_input,measure_pitch*180/pi)
         pubRollPitch.publish(x = pitch_input0,y=-roll_input0)
+        if (abs(roll_input0) < 0.5) and (abs(pitch_input0) < 0.5 ):
+            IMU_toggle = -1
+    elif IMU_toggle == -1:
+        pubRollPitch.publish(x = 0.0,y=-0.0)
 
     #print(measure_roll,measure_pitch)
     print(roll_input)

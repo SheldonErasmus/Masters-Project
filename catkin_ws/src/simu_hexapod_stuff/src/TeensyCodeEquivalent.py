@@ -91,9 +91,41 @@ YPath = [[None for i in range(Pathsize*2-2)] for i in range(6)]
 ZPath = [[None for i in range(Pathsize*2-2)] for i in range(6)]
 TurnPath = [None for i in range(Pathsize*2-2)]
 dt=0
+prev_XPath = [[None for i in range(Pathsize*2-2)] for i in range(6)]
+prev_YPath = [[None for i in range(Pathsize*2-2)] for i in range(6)]
+prev_ZPath = [[None for i in range(Pathsize*2-2)] for i in range(6)]
+prev_TurnPath = [None for i in range(Pathsize*2-2)]
+prev_dt=0
 startSetPath = 0
 def legpath_cb(msg):
-    global dt, startSetPath
+    global dt, startSetPath,prev_dt
+
+    if msg.DT == -1000:
+        for col in range(Pathsize*2-2):
+            prev_XPath[0][col]=XPath[0][col]
+            prev_XPath[1][col]=XPath[1][col]
+            prev_XPath[2][col]=XPath[2][col]
+            prev_XPath[3][col]=XPath[3][col]
+            prev_XPath[4][col]=XPath[4][col]
+            prev_XPath[5][col]=XPath[5][col]
+
+            prev_YPath[0][col]=YPath[0][col]
+            prev_YPath[1][col]=YPath[1][col]
+            prev_YPath[2][col]=YPath[2][col]
+            prev_YPath[3][col]=YPath[3][col]
+            prev_YPath[4][col]=YPath[4][col]
+            prev_YPath[5][col]=YPath[5][col]
+
+            prev_ZPath[0][col]=ZPath[0][col]
+            prev_ZPath[1][col]=ZPath[1][col]
+            prev_ZPath[2][col]=ZPath[2][col]
+            prev_ZPath[3][col]=ZPath[3][col]
+            prev_ZPath[4][col]=ZPath[4][col]
+            prev_ZPath[5][col]=ZPath[5][col]
+
+            prev_TurnPath[col]=TurnPath[col]
+
+            prev_dt = 500
 
     for col in range(Pathsize*2-2):
         XPath[0][col]=msg.PathL0x[col]
@@ -168,7 +200,7 @@ currentPathPoint = [3,9,3,9,3,9]
 currentPathPoint_tw = [3,3]
 
 def SetNextPathPoint(XP,YP,ZP,TurnP,d_t):
-    global prevtime, stepStartFlag, currentPathPoint, currentPathPoint_tw
+    global prevtime, stepStartFlag, currentPathPoint, currentPathPoint_tw, dt
 
     if(d_t != -1000):
     
@@ -199,14 +231,44 @@ def SetNextPathPoint(XP,YP,ZP,TurnP,d_t):
 
             if currentPathPoint[0] == 7 or currentPathPoint[1] == 7:
                 FeetOnFloorFlag.publish(data = 1)
-    else:
+
+    elif(d_t == -1000 and prev_XPath[0][3] != None): 
+
+        for i in range(6):
+        
+            x = prev_XPath[i][currentPathPoint[i]]
+            y = prev_YPath[i][currentPathPoint[i]]
+            z = prev_ZPath[i][currentPathPoint[i]]
+            yaww = prev_TurnPath[currentPathPoint_tw[i%2]]
+        
+            (theta1[i],theta2[i],theta3[i]) = IK(x,y,z,i,prev_dt,rollInput,pitchInput,yaww,0)
+    
+        if(curtime - prevtime >= prev_dt):
+        
+            prevtime = curtime
+    
+            for i in range(6):
+                if(currentPathPoint[i] == 2):
+                    dt = -1001
+                elif(currentPathPoint[i] <= 0):
+                    currentPathPoint[i] = 11
+                else:
+                    currentPathPoint[i] = currentPathPoint[i] - 1
+
+            for i in range(2):
+                if(currentPathPoint_tw[i] <= 0):
+                    currentPathPoint_tw[i] = 11
+                else:
+                    currentPathPoint_tw[i] = currentPathPoint_tw[i] - 1
+
+    if(d_t == -1001):
         # for i in range(6):
         #     x = XP[i][currentPathPoint[i]]
         #     y = YP[i][currentPathPoint[i]]
         #     z = ZP[i][currentPathPoint[i]]
         #     yaww = TurnP[currentPathPoint_tw[i%2]]
         
-        #     (theta1[i],theta2[i],theta3[i]) = IK(x,y,z,i,500,0,0,yaww)
+        #     (theta1[i],theta2[i],theta3[i]) = IK(x,y,z,i,500,0,0,yaww) 
         
         for i in range(6):
             currentPathPoint_tw[i%2] = 3
@@ -301,7 +363,7 @@ def ConstrainCheck2(th1,th2,th3):
         if th3[i] > 0 or th3[i] < -150/180*pi:
             LegitMove = 0
 
-        if th2[i] > 60/180*pi or th2[i] < -90/180*pi:
+        if th2[i] > 75/180*pi or th2[i] < -90/180*pi:
             LegitMove = 0
 
         if th1[i] > 50/180*pi or th1[i] < -50/180*pi:

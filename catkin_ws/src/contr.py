@@ -1,4 +1,3 @@
-import signal
 from xbox360controller import Xbox360Controller
 import rospy
 from geometry_msgs.msg import Twist
@@ -32,7 +31,10 @@ def vel_path_cb(msg):
         vx_way = msg.linear.x
         z_way = msg.angular.z
 
-
+def stopwalking():
+    robot.set_walk_velocity(0,0,0)
+    IMU_toggle_pub.publish(0)
+    rospy.sleep(1)
 
 rospy.init_node('XboxController')
 
@@ -41,6 +43,8 @@ mode_pub = rospy.Publisher('/mode_selected',Float32,queue_size=1)
 IMU_toggle_pub = rospy.Publisher('/IMU_toggle',Float32,queue_size=1)
 
 rospy.Subscriber('/simple_hexapod/changed_vel_path_var',PathVar_n_cmdVel,vel_path_cb,queue_size=1)
+
+rospy.on_shutdown(stopwalking)
 
 def _map(x, in_min, in_max, out_min, out_max):
     return float((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
@@ -127,6 +131,7 @@ def on_start_button_pressed(button):
         start = 1
         mode_pub.publish(data=-1)
         robot.set_walk_velocity(0,0,0)
+        IMU_toggle_pub.publish(-1)
 def on_start_button_released(button):
     #print('Button {0} was released'.format(button.name))
     pass
@@ -136,7 +141,7 @@ def on_Laxis_moved(axis):
     axX = -axis.y
     axY = axis.x
     flag_Lstick = 1
-  
+
 def on_left_stick_pressed(stick):
     global IMU_toggle
     IMU_toggle = 1 if IMU_toggle == 0 else 0
@@ -309,7 +314,7 @@ try:
 
                             totV = (vx**2+vy**2)**(1/2)
                             print('vx: {0} vy: {1} V: {2}'.format(vx, vy, totV))
-                            robot.set_walk_velocity(vx,vy,0)
+                            robot.set_walk_velocity(vx,vy,turnAng)
 
                     if flag_cam == 1:
                         robot.set_path_var(Sh = StepH, Fh = FootH)
@@ -322,3 +327,5 @@ try:
             rospy.sleep(0.01)
 except KeyboardInterrupt:
     pass
+except:
+    print("no")
