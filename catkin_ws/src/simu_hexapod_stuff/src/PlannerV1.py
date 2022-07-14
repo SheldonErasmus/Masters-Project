@@ -58,7 +58,7 @@ class Planner:
             tf = 2
             self.dt = -1
             (self.x,self.y,self.z,self.xd,self.yd,self.zd) = self.Move.makepath_walk(0,self.Sh,self.Fh,self.Rd,self.p,self.r,self.di,self.BH,tf,self.pathsize)
-            self.z = ones((6,7*2-2))*-self.BH
+            #self.z = ones((6,7*2-2))*-self.BH
             (self.ang,z,self.ang_d,z_d) = self.Move.makepath_turn(0,0,tf,self.pathsize)
 
         self.robot.sendpathflag = 1

@@ -9,7 +9,7 @@ sys.path.append("/home/devlon/catkin_ws/src/simu_hexapod_stuff/src")
 from hexapodC import HexapodC
 
 flag_a = 0; flag_y = 0; flag_x = 0; flag_b = 0; flag_LB = 0; flag_RB = 0;flag_cam=0;flag_way=0
-mode = 0; mode_selected = -1; IMU_toggle = 0  
+mode = 0; mode_selected = -1; IMU_toggle = 0; CAM_toggle = 0  
 start = 0
 axX =0.0; axY = 0.0; flag_Lstick = 0
 vx = 0.0; vy = 0.0; totV = 0.0
@@ -149,6 +149,14 @@ def on_left_stick_pressed(stick):
 def on_left_stick_released(stick):
     pass
 
+def on_right_stick_pressed(stick):
+    global CAM_toggle
+    CAM_toggle = 1 if CAM_toggle == 0 else 0
+    if CAM_toggle == 0:
+        robot.set_path_var(Sh = [50, 50, 50, 50, 50, 50], Fh = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
+def on_right_stick_released(stick):
+    pass
+
 try:
     with Xbox360Controller(0, axis_threshold=0.2) as controller:
         # Button A events
@@ -179,6 +187,10 @@ try:
 
         controller.button_thumb_l.when_pressed = on_left_stick_pressed
         controller.button_thumb_l.when_released = on_left_stick_released
+
+        controller.button_thumb_r.when_pressed = on_right_stick_pressed
+        controller.button_thumb_r.when_released = on_right_stick_released
+
         # Left and right axis move event
         controller.axis_l.when_moved = on_Laxis_moved
         #controller.axis_r.when_moved = on_axis_moved
@@ -316,7 +328,7 @@ try:
                             print('vx: {0} vy: {1} V: {2}'.format(vx, vy, totV))
                             robot.set_walk_velocity(vx,vy,turnAng)
 
-                    if flag_cam == 1:
+                    if flag_cam == 1 and CAM_toggle == 1:
                         robot.set_path_var(Sh = StepH, Fh = FootH)
                         flag_cam = 0
 

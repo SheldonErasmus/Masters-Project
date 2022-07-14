@@ -98,7 +98,7 @@ prev_TurnPath = [None for i in range(Pathsize*2-2)]
 prev_dt=0
 startSetPath = 0
 def legpath_cb(msg):
-    global dt, startSetPath,prev_dt
+    global dt, startSetPath,prev_dt,standBegin
 
     for col in range(Pathsize*2-2):
         XPath[0][col]=msg.PathL0x[col]
@@ -126,6 +126,7 @@ def legpath_cb(msg):
 
         dt = msg.DT
     startSetPath = 1
+    standBegin = 1 
 rosSubPATH = rospy.Subscriber("/simple_hexapod/Legs_paths", LegPath,legpath_cb)
 
 mode = -1
@@ -171,6 +172,7 @@ once = 0
 
 currentPathPoint = [3,9,3,9,3,9]
 currentPathPoint_tw = [3,3]
+standBegin = 0
 
 def SetNextPathPoint(XP,YP,ZP,TurnP,d_t):
     global prevtime, stepStartFlag, currentPathPoint, currentPathPoint_tw, dt
@@ -205,20 +207,22 @@ def SetNextPathPoint(XP,YP,ZP,TurnP,d_t):
             if currentPathPoint[0] == 7 or currentPathPoint[1] == 7:
                 FeetOnFloorFlag.publish(data = 1)
 
-    else:
-        # for i in range(6):
-        #     x = XP[i][currentPathPoint[i]]
-        #     y = YP[i][currentPathPoint[i]]
-        #     z = ZP[i][currentPathPoint[i]]
-        #     yaww = TurnP[currentPathPoint_tw[i%2]]
-        
-        #     (theta1[i],theta2[i],theta3[i]) = IK(x,y,z,i,500,0,0,yaww) 
-        
+    else:        
         for i in range(6):
             currentPathPoint_tw[i%2] = 3
             currentPathPoint[i] = 3 if (i%2 == 0) else 9
         prevtime = curtime
         stepStartFlag = 0
+
+        if standBegin == 0:
+            ZP = [-140,-140,-140,-140,-140,-140]
+            for i in range(6):
+                x = XP[i][currentPathPoint[i]]
+                y = YP[i][currentPathPoint[i]]
+                z = ZP[i]
+                yaww = TurnP[currentPathPoint_tw[i%2]]
+            
+                (theta1[i],theta2[i],theta3[i]) = IK(x,y,z,i,1000,rollInput,pitchInput,yaww,0)
     
 Angle = [None for i in range(18)]
 
@@ -330,6 +334,7 @@ def ConstrainCheck2(th1,th2,th3):
     return th1,th2,th3
 
 kinematicModeStartFlag = 0
+stepStartTimer = -1000
 
 while 1:
     currentmillis = millis()
@@ -352,6 +357,7 @@ while 1:
             SetAngles(theta1,theta2,theta3)
             if(currentmillis - startUp_startTime >= 5000): 
                 startUp = 1
+                standBegin = 0
 
         if(mode == 0 and startUp == 1):
             stepStartFlag = 0
@@ -416,10 +422,11 @@ while 1:
         elif(mode == 2 and startSetPath == 1 and startUp == 1):
             kinematicModeStartFlag = 0
             
-            if(stepStartFlag == 0):
+            if(stepStartFlag == 0 and standBegin == 1):
 
                 stepStartTimer = millis()
                 stepStartFlag = 1
+                standBegin = 0
 
             if(currentmillis - stepStartTimer <= 1000):
 
