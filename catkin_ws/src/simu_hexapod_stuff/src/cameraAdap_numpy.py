@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
+from math import isclose
 import rospy
 from sensor_msgs.msg import Image as msg_Image
 from sensor_msgs.msg import CameraInfo, NavSatFix, Imu
@@ -19,12 +20,12 @@ class ImageListener:
     def __init__(self, topic):
         self.topic = topic
         self.bridge = CvBridge()
+        self.flag = 0
         self.sub = rospy.Subscriber(topic, numpy_msg(msg_Image), self.imageDepthCallback)
         self.sub_info = rospy.Subscriber('/camera/depth/camera_info', CameraInfo, self.imageDepthInfoCallback)
         self.intrinsics = None
         self.cv_image = [np.ones((720,1280)) for i in range(6)]
-        self.flag = 0
-
+        
         pose = {"x":0,"y":0, "z":0,"yaw":0}
         self.image_pose = [pose for i in range(6)]
 
@@ -34,8 +35,8 @@ class ImageListener:
         if self.flag == 1:
             self.flag = 0 
             try:
-                temp1 = [np.frombuffer(data.data, dtype=np.uint16).reshape(data.height, data.width)]
-                temp = [self.bridge.imgmsg_to_cv2(data, data.encoding)]
+                temp = [np.frombuffer(data.data, dtype=np.uint16).reshape(data.height, data.width)]
+                temp1 = [self.bridge.imgmsg_to_cv2(data, data.encoding)]
                 self.cv_image = np.concatenate((self.cv_image[1:6],temp))
                 pose = [{"x":n,"y":e, "z":d,"yaw":yaw}]
                 self.image_pose = np.concatenate((self.image_pose[1:6],pose))
@@ -116,9 +117,9 @@ if __name__ == '__main__':
 
     rospy.wait_for_message('WorldFeetPlace',WorldFeetPlace)
     
-    H = 300 #height of cam
-    L = 0 #X offset of cam
-    CA = 40 #cam angle
+    H = 130 #height of cam
+    L = 60 #X offset of cam
+    CA = 30 #cam angle
     LI = 17.5 #Left imager offset
     
     HL = np.sqrt(H**2+L**2) #slope of offsets
@@ -186,7 +187,7 @@ if __name__ == '__main__':
                                 if Pixels[1] < 0 or Pixels[1] >= listener.intrinsics.height: continue
                                 depth = listener.cv_image[loopCounter][Pixels[1],Pixels[0]] 
 
-                                if abs((depth-j)/depth) < 0.02:
+                                if isclose(depth,j,rel_tol=0.01,abs_tol=0.0): #abs((depth-j)/depth) < 0.02
                                     loopBreak = 1
                                     flag[k] = 1
                                     z = depth 
