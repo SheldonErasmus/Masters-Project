@@ -9,7 +9,7 @@ sys.path.append("/home/devlon/catkin_ws/src/simu_hexapod_stuff/src")
 from hexapodC import HexapodC
 
 flag_a = 0; flag_y = 0; flag_x = 0; flag_b = 0; flag_LB = 0; flag_RB = 0;flag_cam=0;flag_way=0
-mode = 0; mode_selected = -1; IMU_toggle = 0; CAM_toggle = 0  
+mode = 0; mode_selected = -1; IMU_toggle = 0; CAM_toggle = 0; NAVmode = 0; NAVmode_selected = 0  
 start = 0
 axX =0.0; axY = 0.0; flag_Lstick = 0
 vx = 0.0; vy = 0.0; totV = 0.0
@@ -41,6 +41,7 @@ rospy.init_node('XboxController')
 teleop_pub = rospy.Publisher('/cmd_vel',Twist,queue_size=1)
 mode_pub = rospy.Publisher('/mode_selected',Float32,queue_size=1)
 IMU_toggle_pub = rospy.Publisher('/IMU_toggle',Float32,queue_size=1)
+Nav_pub = rospy.Publisher('/Nav_mode',Float32,queue_size=1)
 
 rospy.Subscriber('/simple_hexapod/changed_vel_path_var',PathVar_n_cmdVel,vel_path_cb,queue_size=1)
 
@@ -49,6 +50,28 @@ rospy.on_shutdown(stopwalking)
 def _map(x, in_min, in_max, out_min, out_max):
     return float((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
 
+def print_stuff():
+    if NAVmode_selected == 0:
+        print('\n\t NAVmode_selected: Nav off')
+    elif NAVmode_selected == 1:
+        print('\t NAVmode_selected: Heading controll on')
+    elif NAVmode_selected == 2:
+        print('\t NAVmode_selected: Waypoint nav on')
+
+    if IMU_toggle == 0:
+        print('\t\t IMU toggle: off')
+    elif IMU_toggle == 1:
+        print('\t\t IMU toggle: on')
+
+    if CAM_toggle == 0:
+        print('\t\t Cam toggle: off')
+    elif CAM_toggle == 1:
+        print('\t\t Cam toggle: on')   
+    
+    if flag_way == 1:
+        print('\t\t vx: {0} vy: {1} V: {2} body height: {3} Turn Ang: {4} \n\t\t Foot height: {5} Step height: {6}'.format(vx_way, vy_way, z_way, bh, turnAng, FootH, StepH))
+    else:
+        print('\t\t vx: {0} vy: {1} V: {2} body height: {3} Turn Ang: {4} \n\t\t Foot height: {5} Step height: {6}'.format(vx, vy, totV, bh, turnAng, FootH, StepH))
 
 def on_A_button_pressed(button):
     #print('Button {0} was pressed'.format(button.name))
@@ -108,18 +131,24 @@ def on_mode_button_pressed(button):
     mode = mode + 1
     if mode > 2:
         mode = 0
-    print(mode)
+    print("mainmode {0}" .format(mode))
 def on_mode_button_released(button):
     #print('Button {0} was released'.format(button.name))
     pass
 
 def on_select_button_pressed(button):
     #print('Button {0} was pressed'.format(button.name))
-    global mode_selected
-    if totV == 0.0 and IMU_toggle == 0:
-        mode_selected = mode
-        print('mode selected: {0}'.format(mode_selected))
-        mode_pub.publish(data=mode_selected)
+    global mode_selected, NAVmode_selected, NAVmode
+    if mode_selected != mode:
+        if totV == 0.0 and IMU_toggle == 0 and start == 1 and NAVmode_selected == 0:
+            mode_selected = mode
+            NAVmode = 0
+            print('mainmode selected: {0}'.format(mode_selected))
+            mode_pub.publish(data=mode_selected)
+    if mode_selected == 2:
+        NAVmode_selected = NAVmode
+        print('\t NAVmode selected: {0}'.format(NAVmode_selected))
+        Nav_pub.publish(data=NAVmode_selected)
 def on_select_button_released(button):
     #print('Button {0} was released'.format(button.name))
     pass
@@ -157,6 +186,17 @@ def on_right_stick_pressed(stick):
 def on_right_stick_released(stick):
     pass
 
+def on_dpad_moved(axis):
+    global NAVmode
+    if mode_selected == 2:
+        if axis.y == 1:
+            NAVmode = NAVmode + 1
+            if NAVmode > 2: NAVmode = 0
+        elif axis.y == -1:
+            NAVmode = NAVmode - 1
+            if NAVmode < 0: NAVmode = 2
+        print("\t NAVmode {0} " .format(NAVmode))
+
 try:
     with Xbox360Controller(0, axis_threshold=0.2) as controller:
         # Button A events
@@ -190,6 +230,8 @@ try:
 
         controller.button_thumb_r.when_pressed = on_right_stick_pressed
         controller.button_thumb_r.when_released = on_right_stick_released
+
+        controller.hat.when_moved = on_dpad_moved
 
         # Left and right axis move event
         controller.axis_l.when_moved = on_Laxis_moved
@@ -291,7 +333,7 @@ try:
 
                             turnAng = round(turnAng,2)
 
-                            print('body height: {0} Turn Ang: {1}'.format(bh, turnAng))
+                            print_stuff()#print('body height: {0} Turn Ang: {1}'.format(bh, turnAng))
                             robot.set_walk_velocity(vx,vy,turnAng)
                             robot.set_path_var(BH = bh)
 
@@ -325,16 +367,18 @@ try:
                             vy = round(vy,3)
 
                             totV = (vx**2+vy**2)**(1/2)
-                            print('vx: {0} vy: {1} V: {2}'.format(vx, vy, totV))
+                            print_stuff()#print('vx: {0} vy: {1} V: {2}'.format(vx, vy, totV))
                             robot.set_walk_velocity(vx,vy,turnAng)
 
                     if flag_cam == 1 and CAM_toggle == 1:
                         robot.set_path_var(Sh = StepH, Fh = FootH)
+                        print_stuff()
                         flag_cam = 0
 
                     if flag_way == 1:
-                        flag_way = 0
                         robot.set_walk_velocity(vx_way,vy_way,z_way)
+                        print_stuff()
+                        flag_way = 0
 
             rospy.sleep(0.01)
 except KeyboardInterrupt:
