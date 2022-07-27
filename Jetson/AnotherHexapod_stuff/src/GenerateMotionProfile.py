@@ -37,8 +37,9 @@ class StepProfile:
 
         if Vtop > self.Vmax:
             Remain_time = Tot_distance/self.Vmax
+            self.Tot_time = Remain_time + cur_time
             Vtop = self.Vmax
-            print('Velocity can not exceed {}, now using {} as total time' .format(self.Vmax,Remain_time))
+            print('Velocity can not exceed {}, now using {} as total time' .format(self.Vmax,self.Tot_time))
 
         self.F = lambda t: 0 if t<0 else (Vtop if t>=0 and t<= cur_time+Remain_time else 0)
     

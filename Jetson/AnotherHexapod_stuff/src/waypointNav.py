@@ -30,9 +30,9 @@ def hedge_pos_ang_callback(msg):
         e_prev = e_cur
         n_prev = n_cur
 
-    e_cur = msg.x_m*1000
-    n_cur = msg.y_m*1000
-    d_cur = -msg.z_m*1000
+    e_cur = msg.x_m #*1000
+    n_cur = msg.y_m #*1000
+    d_cur = -msg.z_m #*1000
 
     if msg.angle>180:
         Yaw_meas_pair = msg.angle-360
@@ -91,13 +91,20 @@ def marvelmind_waypoint_callback(msg):
         Epoints = [None for i in range(total_items)]
         Npoints = [None for i in range(total_items)]
 
-    Epoints[index] = msg.param1*10
-    Npoints[index] = msg.param2*10
+    Epoints[index] = msg.param1/100
+    Npoints[index] = msg.param2/100
     #Dpoints[index] = msg.param3
     print(index, total_items, movement_type, Epoints, Npoints)
 
     if index == total_items-1:
         DoWaypointFlag = 1
+
+NavMode = 0
+once = 1
+def NavMode_cb(msg):
+    global NavMode, once
+    NavMode = msg.data
+    once = 1
 
 if __name__ == '__main__':
     rospy.init_node("WayP_Nav")
@@ -112,15 +119,20 @@ if __name__ == '__main__':
     subyaw = rospy.Subscriber('/simple_hexapod/calculated_yaw', Float32, yaw_cb, queue_size=1)
     rospy.Subscriber("marvelmind_waypoint", marvelmind_waypoint, marvelmind_waypoint_callback, queue_size=1) 
     pub = rospy.Publisher('/simple_hexapod/changed_vel_path_var', PathVar_n_cmdVel,queue_size=1)
+    Nav_sub = rospy.Subscriber('/Nav_mode',Float32,NavMode_cb,queue_size=1)
 
     PathVelmsg = PathVar_n_cmdVel()
     PathVelmsg.Name = "Waypoint"
 
+    StartOfWaypoint = 1
+
     while not rospy.is_shutdown():
 
-        if DoWaypointFlag == 1:
+        if DoWaypointFlag == 1 and NavMode == 2:
 
-            if index == 0:
+            if StartOfWaypoint == 1:
+                StartOfWaypoint = 0
+                
                 Esrc = Epoints[index]
                 Nsrc = Npoints[index]
                 Edest = Epoints[index+1]
@@ -192,6 +204,37 @@ if __name__ == '__main__':
 
                     TrapezstartTime = time.time()
 
+        elif NavMode == 1:
+            if once == 1:
+                once = 0
+                onceStop = 1
+                headControlON = 1
+                Desired_Head = -float(input("Enter desired heading: "))*pi/180
+            Gain = 1
+            ref_head = Desired_Head
+            Head_command = -Gain*(ref_head - (90-Cor_yaw_cur)*pi/180)
+
+            if abs(Head_command) > pi:
+                Head_command = Head_command - copysign(2*pi,Head_command)
+
+            if abs(Head_command*180/pi) < 0.5:
+                headControlON = 0
+            if abs(Head_command*180/pi) > 2:
+                headControlON = 1
+            
+            if headControlON == 1: 
+                onceStop = 1
+                if abs(Head_command*180/pi) >= 15:
+                    PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=copysign(15,Head_command)
+                    pub.publish(PathVelmsg) #robot.set_walk_velocity(V_hexTot,0,copysign(15,Head_command))
+                else:
+                    PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=Head_command*180/pi
+                    pub.publish(PathVelmsg)
+            elif onceStop == 1:
+                onceStop = 0
+                PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=0.0*180/pi
+                pub.publish(PathVelmsg)
+        
         rospy.sleep(0.1) 
 
 
