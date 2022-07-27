@@ -4,7 +4,7 @@ import rospy
 from hexapodC import HexapodC
 from sensor_msgs.msg import NavSatFix, Imu
 from wgs2ned import WGS2NED
-from math import atan2, sqrt, cos, sin, pi, copysign
+from math import atan2, sqrt, cos, sin, pi, copysign, isclose
 from numpy import array
 from ToEulerAngles import ToEulerAng
 from gazebo_msgs.srv import SpawnModel, DeleteModel, GetModelState
@@ -47,9 +47,11 @@ def imu_cb(msg):
     curr_Head_hex = -curr_Head_hex
 
 NavMode = 0
+once = 1
 def NavMode_cb(msg):
-    global NavMode
+    global NavMode, once
     NavMode = msg.data
+    once = 1
 
 def integrator(u,timestep):
     global y
@@ -80,8 +82,6 @@ if __name__ == '__main__':
     StartOfWaypoint = 1
     index = 0
     total_items = 2
-
-    once = 1
   
     spawn_model_client = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
     delete_model_client = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)
@@ -188,16 +188,32 @@ if __name__ == '__main__':
         elif NavMode == 1:
             if once == 1:
                 once = 0
+                onceStop = 1
+                headControlON = 1
                 Desired_Head = -float(input("Enter desired heading: "))*pi/180
             Gain = 1
             ref_head = Desired_Head
             Head_command = -Gain*(ref_head - curr_Head_hex)
 
-            if abs(Head_command*180/pi) >= 15:
-                PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=copysign(15,Head_command)
-                pub.publish(PathVelmsg) #robot.set_walk_velocity(V_hexTot,0,copysign(15,Head_command))
-            else:
-                PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=Head_command*180/pi
+            if abs(Head_command) > pi:
+                Head_command = Head_command - copysign(2*pi,Head_command)
+
+            if abs(Head_command*180/pi) < 0.5:
+                headControlON = 0
+            if abs(Head_command*180/pi) > 2:
+                headControlON = 1
+            
+            if headControlON == 1: 
+                onceStop = 1
+                if abs(Head_command*180/pi) >= 15:
+                    PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=copysign(15,Head_command)
+                    pub.publish(PathVelmsg) #robot.set_walk_velocity(V_hexTot,0,copysign(15,Head_command))
+                else:
+                    PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=Head_command*180/pi
+                    pub.publish(PathVelmsg)
+            elif onceStop == 1:
+                onceStop = 0
+                PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=0.0*180/pi
                 pub.publish(PathVelmsg)
 
         rospy.sleep(0.1) 
