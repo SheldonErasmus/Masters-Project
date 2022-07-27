@@ -3,6 +3,7 @@ import rospy
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float32
 from my_message.msg import PathVar_n_cmdVel
+from numpy import isnan
 
 import sys
 sys.path.append("/home/devlon/catkin_ws/src/simu_hexapod_stuff/src")
@@ -28,7 +29,7 @@ def vel_path_cb(msg):
         StepH = msg.path_var.Sh
     if msg.Name == 'Waypoint':
         flag_way = 1
-        vx_way = msg.linear.x
+        vx_way = vx if isnan(msg.linear.x) else msg.linear.x
         z_way = msg.angular.z
 
 def stopwalking():
@@ -69,7 +70,7 @@ def print_stuff():
         print('\t\t Cam toggle: on')   
     
     if flag_way == 1:
-        print('\t\t vx: {0} vy: {1} V: {2} body height: {3} Turn Ang: {4} \n\t\t Foot height: {5} Step height: {6}'.format(vx_way, vy_way, z_way, bh, turnAng, FootH, StepH))
+        print('\t\t vx: {0} vy: {1} V: {2} body height: {3} Turn Ang: {4} \n\t\t Foot height: {5} Step height: {6}'.format(vx_way, vy_way, (vx_way**2+vy_way**2)**(1/2), bh, z_way, FootH, StepH))
     else:
         print('\t\t vx: {0} vy: {1} V: {2} body height: {3} Turn Ang: {4} \n\t\t Foot height: {5} Step height: {6}'.format(vx, vy, totV, bh, turnAng, FootH, StepH))
 
@@ -131,7 +132,7 @@ def on_mode_button_pressed(button):
     mode = mode + 1
     if mode > 2:
         mode = 0
-    print("mainmode {0}" .format(mode))
+    print("mode {0}" .format(mode))
 def on_mode_button_released(button):
     #print('Button {0} was released'.format(button.name))
     pass
@@ -143,12 +144,12 @@ def on_select_button_pressed(button):
         if totV == 0.0 and IMU_toggle == 0 and start == 1 and NAVmode_selected == 0:
             mode_selected = mode
             NAVmode = 0
-            print('mainmode selected: {0}'.format(mode_selected))
+            print('mode selected: {0}'.format(mode_selected))
             mode_pub.publish(data=mode_selected)
     if mode_selected == 2:
         NAVmode_selected = NAVmode
-        print('\t NAVmode selected: {0}'.format(NAVmode_selected))
         Nav_pub.publish(data=NAVmode_selected)
+        print_stuff()#print('\t NAVmode selected: {0}'.format(NAVmode_selected))
 def on_select_button_released(button):
     #print('Button {0} was released'.format(button.name))
     pass
@@ -175,12 +176,14 @@ def on_left_stick_pressed(stick):
     global IMU_toggle
     IMU_toggle = 1 if IMU_toggle == 0 else 0
     IMU_toggle_pub.publish(IMU_toggle)
+    print_stuff()
 def on_left_stick_released(stick):
     pass
 
 def on_right_stick_pressed(stick):
     global CAM_toggle
     CAM_toggle = 1 if CAM_toggle == 0 else 0
+    print_stuff()
     if CAM_toggle == 0:
         robot.set_path_var(Sh = [50, 50, 50, 50, 50, 50], Fh = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0])
 def on_right_stick_released(stick):
