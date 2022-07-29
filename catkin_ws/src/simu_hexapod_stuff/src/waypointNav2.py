@@ -247,11 +247,10 @@ if __name__ == '__main__':
             if ct_dist < L_t:
                         
                 ct_err_ref = 0.0
-                err_ref = ct_err_ref - ct_err #ct_err Nie integrasie gebruik nie
+                err_ref = ct_err_ref - ct_err 
                 Ky = 2 #0.3 
                 Head_ref = Head_t + Ky*err_ref
-                crabangle = atan2(vy,vx)
-                Head_command = -(Head_ref - (pi/2-curr_Head_hex-crabangle))
+                Head_command = (Head_ref - (pi/2-curr_Head_hex))
 
                 if abs(Head_command) > pi:
                     Head_command = Head_command - copysign(2*pi,Head_command)
@@ -261,23 +260,17 @@ if __name__ == '__main__':
                 xdot = stepP.F(time.time()-TrapezstartTime) #Added 26Jan
                 V_hexTot = xdot #11Nov
 
-                if abs(Head_command*180/pi) >= 12:
-                    PathVelmsg.linear.x=V_hexTot; PathVelmsg.angular.z=copysign(12,Head_command)
-                    pub.publish(PathVelmsg) #robot.set_walk_velocity(V_hexTot,0,copysign(15,Head_command))
-                else:
-                    PathVelmsg.linear.x=V_hexTot; PathVelmsg.angular.z=Head_command*180/pi
-                    pub.publish(PathVelmsg) #robot.set_walk_velocity(V_hexTot,0,Head_command*180/pi)
-
-                # ydot = V_hexTot*(curr_Head_hex-Head_t)
-                # y = integrator(ydot,stepTime)
+                
+                PathVelmsg.linear.x=V_hexTot*cos(Head_command); PathVelmsg.linear.y=V_hexTot*sin(Head_command); PathVelmsg.angular.z=0
+                pub.publish(PathVelmsg) 
 
                 #rospy.loginfo([ct_err, y, Head_ref, curr_Head_hex, Head_command])
                 rospy.loginfo([V_hexTot,-TrapezstartTime+time.time()])
                 
             else:
                 if flag == 1:
-                    PathVelmsg.linear.x=0; PathVelmsg.angular.z=0
-                    pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,0)
+                    PathVelmsg.linear.x=0; PathVelmsg.linear.y=0; PathVelmsg.angular.z=0
+                    pub.publish(PathVelmsg) 
                     Esrc = Edest
                     Nsrc = Ndest
                     Edest = float(input("Enter new Edest: "))

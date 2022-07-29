@@ -22,7 +22,7 @@ bh = HexapodC.BH; turnAng = 0.0; FootH = HexapodC.Fh; StepH = HexapodC.Sh
 vx_way = 0; vy_way = 0;z_way = 0
 
 def vel_path_cb(msg):
-    global FootH,StepH,flag_cam,vx_way,z_way,flag_way
+    global FootH,StepH,flag_cam,vx_way,vy_way,z_way,flag_way
     if msg.Name == 'Camera':
         flag_cam = 1
         FootH = msg.path_var.Fh
@@ -30,6 +30,7 @@ def vel_path_cb(msg):
     if msg.Name == 'Waypoint':
         flag_way = 1
         vx_way = vx if isnan(msg.linear.x) else msg.linear.x
+        vy_way = vy if isnan(msg.linear.y) else msg.linear.y
         z_way = msg.angular.z
 
 def stopwalking():
@@ -58,6 +59,8 @@ def print_stuff():
         print('\t NAVmode_selected: Heading controll on')
     elif NAVmode_selected == 2:
         print('\t NAVmode_selected: Waypoint nav on')
+    elif NAVmode_selected == 3:
+        print('\t NAVmode_selected: Waypoint nav crab on')
 
     if IMU_toggle == 0:
         print('\t\t IMU toggle: off')
@@ -194,10 +197,10 @@ def on_dpad_moved(axis):
     if mode_selected == 2:
         if axis.y == 1:
             NAVmode = NAVmode + 1
-            if NAVmode > 2: NAVmode = 0
+            if NAVmode > 3: NAVmode = 0
         elif axis.y == -1:
             NAVmode = NAVmode - 1
-            if NAVmode < 0: NAVmode = 2
+            if NAVmode < 0: NAVmode = 3
         print("\t NAVmode {0} " .format(NAVmode))
 
 try:
