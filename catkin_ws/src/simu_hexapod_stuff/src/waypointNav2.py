@@ -37,14 +37,14 @@ def nav_cb(msg):
     # Alt = msg.altitude
     # (n,e,d) = WGS2NED(refLat,refLon,refAlt,Lat,Lon,Alt)
     object_coordinates = model_coordinates("simple_hexapod","")
-    n = object_coordinates.pose.position.x
-    e = -object_coordinates.pose.position.y
+    n = object_coordinates.pose.position.y
+    e = object_coordinates.pose.position.x
     d = -object_coordinates.pose.position.z
 
 def imu_cb(msg):
     global curr_Head_hex,hex_roll,hex_pitch
     (hex_roll,hex_pitch,curr_Head_hex) = ToEulerAng(msg.orientation.x,msg.orientation.y,msg.orientation.z,msg.orientation.w) #Added 26Jan
-    curr_Head_hex = -curr_Head_hex
+    curr_Head_hex = curr_Head_hex
 
 NavMode = 0
 once = 1
@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
     robot = HexapodC()
     #trapez = TrapezoidalProfile() #11Nov
-    stepP = StepProfile(0.1,150) #Added 26Jan
+    stepP = StepProfile(0.1,80) #Added 26Jan
     
     model_coordinates = rospy.ServiceProxy( '/gazebo/get_model_state', GetModelState)
     subGPS = rospy.Subscriber(robot.ns + "fix", NavSatFix, nav_cb, queue_size=1)
@@ -82,11 +82,12 @@ if __name__ == '__main__':
     StartOfWaypoint = 1
     index = 0
     total_items = 2
+    vy = 0.0; vx = 0.0
   
     spawn_model_client = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
     delete_model_client = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)
-    spawn_model_client(model_name='can1',model_xml=open('/home/devlon/.gazebo/models/cricket_ball/model.sdf', 'r').read(),robot_namespace='/can1',initial_pose=Pose(position=Point(Nsrc,-Esrc,0)),reference_frame='world')
-    spawn_model_client(model_name='can2',model_xml=open('/home/devlon/.gazebo/models/cricket_ball/model.sdf', 'r').read(),robot_namespace='/can2',initial_pose=Pose(position=Point(Ndest,-Edest,0)),reference_frame='world')
+    spawn_model_client(model_name='can1',model_xml=open('/home/devlon/.gazebo/models/cricket_ball/model.sdf', 'r').read(),robot_namespace='/can1',initial_pose=Pose(position=Point(Esrc,Nsrc,0)),reference_frame='world')
+    spawn_model_client(model_name='can2',model_xml=open('/home/devlon/.gazebo/models/cricket_ball/model.sdf', 'r').read(),robot_namespace='/can2',initial_pose=Pose(position=Point(Edest,Ndest,0)),reference_frame='world')
 
     cannum = 2
     # flag = 1
@@ -129,17 +130,20 @@ if __name__ == '__main__':
                         
                 ct_err_ref = 0.0
                 err_ref = ct_err_ref - ct_err #ct_err Nie integrasie gebruik nie
-                Ky = 0.7 #0.3 
+                Ky = 2 #0.3 
                 Head_ref = Head_t + Ky*err_ref
-                Head_command = -(Head_ref - curr_Head_hex)
+                Head_command = -(Head_ref - (pi/2-curr_Head_hex))
+
+                if abs(Head_command) > pi:
+                    Head_command = Head_command - copysign(2*pi,Head_command)
 
                 #xdot = trapez.F(time.time()-TrapezstartTime) #11Nov
                 stepP.GenerateProfile(ct_dist,L_t,(time.time()-TrapezstartTime)) #Added 26Jan
                 xdot = stepP.F(time.time()-TrapezstartTime) #Added 26Jan
                 V_hexTot = xdot #11Nov
 
-                if abs(Head_command*180/pi) >= 15:
-                    PathVelmsg.linear.x=V_hexTot; PathVelmsg.angular.z=copysign(15,Head_command)
+                if abs(Head_command*180/pi) >= 12:
+                    PathVelmsg.linear.x=V_hexTot; PathVelmsg.angular.z=copysign(12,Head_command)
                     pub.publish(PathVelmsg) #robot.set_walk_velocity(V_hexTot,0,copysign(15,Head_command))
                 else:
                     PathVelmsg.linear.x=V_hexTot; PathVelmsg.angular.z=Head_command*180/pi
@@ -165,12 +169,17 @@ if __name__ == '__main__':
                     spawn_model_client(model_name='can'+str(cannum) ,model_xml=open('/home/devlon/.gazebo/models/cricket_ball/model.sdf', 'r').read(),robot_namespace='/can'+str(cannum),initial_pose=Pose(position=Point(Ndest,-Edest,0)),reference_frame='world')
                     flag = 0
 
-                if abs(Head_t - curr_Head_hex) > 0.01:
-                    if abs((Head_t - curr_Head_hex)*180/pi) >= 15:
-                        PathVelmsg.linear.x=0; PathVelmsg.angular.z=copysign(15,-(Head_t - curr_Head_hex))
+                Head_command = -(Head_t - (pi/2-curr_Head_hex))
+
+                if abs(Head_command) > pi:
+                    Head_command = Head_command - copysign(2*pi,Head_command)
+
+                if abs(Head_command) > 0.01:
+                    if abs(Head_command*180/pi) >= 15:
+                        PathVelmsg.linear.x=0; PathVelmsg.angular.z=copysign(15,Head_command)
                         pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,copysign(15,-(Head_t - curr_Head_hex)))
                     else:
-                        PathVelmsg.linear.x=0; PathVelmsg.angular.z=-(Head_t - curr_Head_hex)*180/pi
+                        PathVelmsg.linear.x=0; PathVelmsg.angular.z=Head_command*180/pi
                         pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,-(Head_t - curr_Head_hex)*180/pi)
                 else:
                     PathVelmsg.linear.x=0; PathVelmsg.angular.z=0
@@ -190,23 +199,25 @@ if __name__ == '__main__':
                 once = 0
                 onceStop = 1
                 headControlON = 1
-                Desired_Head = -float(input("Enter desired heading: "))*pi/180
+                Desired_Head = float(input("Enter desired heading: "))*pi/180
             Gain = 1
             ref_head = Desired_Head
-            Head_command = -Gain*(ref_head - curr_Head_hex)
+            cur_yaw_adjusted = curr_Head_hex
+            print(cur_yaw_adjusted*180/pi)
+            Head_command = Gain*(ref_head - cur_yaw_adjusted)
 
             if abs(Head_command) > pi:
                 Head_command = Head_command - copysign(2*pi,Head_command)
 
             if abs(Head_command*180/pi) < 0.5:
                 headControlON = 0
-            if abs(Head_command*180/pi) > 2:
+            if abs(Head_command*180/pi) > 8:
                 headControlON = 1
             
             if headControlON == 1: 
                 onceStop = 1
-                if abs(Head_command*180/pi) >= 15:
-                    PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=copysign(15,Head_command)
+                if abs(Head_command*180/pi) >= 12:
+                    PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=copysign(12,Head_command)
                     pub.publish(PathVelmsg) #robot.set_walk_velocity(V_hexTot,0,copysign(15,Head_command))
                 else:
                     PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=Head_command*180/pi
@@ -215,5 +226,91 @@ if __name__ == '__main__':
                 onceStop = 0
                 PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=0.0*180/pi
                 pub.publish(PathVelmsg)
+
+##############################################
+        elif DoWaypointFlag == 1 and NavMode == 3:
+
+            if StartOfWaypoint == 1:
+                StartOfWaypoint = 0
+                flag = 1
+
+                Head_t = atan2((Edest-Esrc),(Ndest-Nsrc))
+                L_t = sqrt((Ndest-Nsrc)**2+(Edest-Esrc)**2)
+
+                TrapezstartTime = time.time()
+
+            if flag == 1:
+                ct = array([[cos(Head_t), sin(Head_t)],[-sin(Head_t), cos(Head_t)]]) @ array([[n-Nsrc],[e-Esrc]])
+                ct_dist = ct[0]
+                ct_err = ct[1]
+
+            if ct_dist < L_t:
+                        
+                ct_err_ref = 0.0
+                err_ref = ct_err_ref - ct_err #ct_err Nie integrasie gebruik nie
+                Ky = 2 #0.3 
+                Head_ref = Head_t + Ky*err_ref
+                crabangle = atan2(vy,vx)
+                Head_command = -(Head_ref - (pi/2-curr_Head_hex-crabangle))
+
+                if abs(Head_command) > pi:
+                    Head_command = Head_command - copysign(2*pi,Head_command)
+
+                #xdot = trapez.F(time.time()-TrapezstartTime) #11Nov
+                stepP.GenerateProfile(ct_dist,L_t,(time.time()-TrapezstartTime)) #Added 26Jan
+                xdot = stepP.F(time.time()-TrapezstartTime) #Added 26Jan
+                V_hexTot = xdot #11Nov
+
+                if abs(Head_command*180/pi) >= 12:
+                    PathVelmsg.linear.x=V_hexTot; PathVelmsg.angular.z=copysign(12,Head_command)
+                    pub.publish(PathVelmsg) #robot.set_walk_velocity(V_hexTot,0,copysign(15,Head_command))
+                else:
+                    PathVelmsg.linear.x=V_hexTot; PathVelmsg.angular.z=Head_command*180/pi
+                    pub.publish(PathVelmsg) #robot.set_walk_velocity(V_hexTot,0,Head_command*180/pi)
+
+                # ydot = V_hexTot*(curr_Head_hex-Head_t)
+                # y = integrator(ydot,stepTime)
+
+                #rospy.loginfo([ct_err, y, Head_ref, curr_Head_hex, Head_command])
+                rospy.loginfo([V_hexTot,-TrapezstartTime+time.time()])
+                
+            else:
+                if flag == 1:
+                    PathVelmsg.linear.x=0; PathVelmsg.angular.z=0
+                    pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,0)
+                    Esrc = Edest
+                    Nsrc = Ndest
+                    Edest = float(input("Enter new Edest: "))
+                    Ndest = float(input("Enter new Ndest: ") )
+                    Head_t = atan2((Edest-Esrc),(Ndest-Nsrc))
+
+                    cannum = cannum +1
+                    spawn_model_client(model_name='can'+str(cannum) ,model_xml=open('/home/devlon/.gazebo/models/cricket_ball/model.sdf', 'r').read(),robot_namespace='/can'+str(cannum),initial_pose=Pose(position=Point(Ndest,-Edest,0)),reference_frame='world')
+                    flag = 0
+
+                Head_command = -(Head_t - (pi/2-curr_Head_hex))
+
+                if abs(Head_command) > pi:
+                    Head_command = Head_command - copysign(2*pi,Head_command)
+
+                if abs(Head_command) > 0.01:
+                    if abs(Head_command*180/pi) >= 15:
+                        PathVelmsg.linear.x=0; PathVelmsg.angular.z=copysign(15,Head_command)
+                        pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,copysign(15,-(Head_t - curr_Head_hex)))
+                    else:
+                        PathVelmsg.linear.x=0; PathVelmsg.angular.z=Head_command*180/pi
+                        pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,-(Head_t - curr_Head_hex)*180/pi)
+                else:
+                    PathVelmsg.linear.x=0; PathVelmsg.angular.z=0
+                    pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,0)
+                    L_t = sqrt((Ndest-Nsrc)**2+(Edest-Esrc)**2)
+                    flag = 1
+
+                    # ct = array([[cos(Head_t), sin(Head_t)],[-sin(Head_t), cos(Head_t)]]) @ array([[n-Nsrc],[e-Esrc]])
+                    # startPos = ct[0] #11Nov
+
+                    # trapez.GenerateProfile(startPos,L_t,150) #11Nov
+                    # stepP.GenerateProfile(startPos,L_t,150) #Added 26Jan
+                    TrapezstartTime = time.time() #11Nov
 
         rospy.sleep(0.1) 
