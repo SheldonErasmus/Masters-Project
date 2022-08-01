@@ -143,10 +143,10 @@ if __name__ == '__main__':
                 V_hexTot = xdot #11Nov
 
                 if abs(Head_command*180/pi) >= 12:
-                    PathVelmsg.linear.x=V_hexTot; PathVelmsg.angular.z=copysign(12,Head_command)
+                    PathVelmsg.linear.x=V_hexTot; PathVelmsg.linear.y=0; PathVelmsg.angular.z=copysign(12,Head_command)
                     pub.publish(PathVelmsg) #robot.set_walk_velocity(V_hexTot,0,copysign(15,Head_command))
                 else:
-                    PathVelmsg.linear.x=V_hexTot; PathVelmsg.angular.z=Head_command*180/pi
+                    PathVelmsg.linear.x=V_hexTot; PathVelmsg.linear.y=0; PathVelmsg.angular.z=Head_command*180/pi
                     pub.publish(PathVelmsg) #robot.set_walk_velocity(V_hexTot,0,Head_command*180/pi)
 
                 # ydot = V_hexTot*(curr_Head_hex-Head_t)
@@ -157,7 +157,7 @@ if __name__ == '__main__':
                 
             else:
                 if flag == 1:
-                    PathVelmsg.linear.x=0; PathVelmsg.angular.z=0
+                    PathVelmsg.linear.x=0; PathVelmsg.linear.y=0; PathVelmsg.angular.z=0
                     pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,0)
                     Esrc = Edest
                     Nsrc = Ndest
@@ -176,13 +176,13 @@ if __name__ == '__main__':
 
                 if abs(Head_command) > 0.01:
                     if abs(Head_command*180/pi) >= 15:
-                        PathVelmsg.linear.x=0; PathVelmsg.angular.z=copysign(15,Head_command)
+                        PathVelmsg.linear.x=0; PathVelmsg.linear.y=0; PathVelmsg.angular.z=copysign(15,Head_command)
                         pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,copysign(15,-(Head_t - curr_Head_hex)))
                     else:
-                        PathVelmsg.linear.x=0; PathVelmsg.angular.z=Head_command*180/pi
+                        PathVelmsg.linear.x=0; PathVelmsg.linear.y=0; PathVelmsg.angular.z=Head_command*180/pi
                         pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,-(Head_t - curr_Head_hex)*180/pi)
                 else:
-                    PathVelmsg.linear.x=0; PathVelmsg.angular.z=0
+                    PathVelmsg.linear.x=0; PathVelmsg.linear.y=0; PathVelmsg.angular.z=0
                     pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,0)
                     L_t = sqrt((Ndest-Nsrc)**2+(Edest-Esrc)**2)
                     flag = 1
@@ -217,14 +217,14 @@ if __name__ == '__main__':
             if headControlON == 1: 
                 onceStop = 1
                 if abs(Head_command*180/pi) >= 12:
-                    PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=copysign(12,Head_command)
-                    pub.publish(PathVelmsg) #robot.set_walk_velocity(V_hexTot,0,copysign(15,Head_command))
+                    PathVelmsg.linear.x=float('nan'); PathVelmsg.linear.y=float('nan'); PathVelmsg.angular.z=copysign(12,Head_command)
+                    pub.publish(PathVelmsg)
                 else:
-                    PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=Head_command*180/pi
+                    PathVelmsg.linear.x=float('nan'); PathVelmsg.linear.y=float('nan'); PathVelmsg.angular.z=Head_command*180/pi
                     pub.publish(PathVelmsg)
             elif onceStop == 1:
                 onceStop = 0
-                PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=0.0*180/pi
+                PathVelmsg.linear.x=float('nan'); PathVelmsg.linear.y=float('nan'); PathVelmsg.angular.z=0.0*180/pi
                 pub.publish(PathVelmsg)
 
 ##############################################
@@ -278,32 +278,13 @@ if __name__ == '__main__':
                     Head_t = atan2((Edest-Esrc),(Ndest-Nsrc))
 
                     cannum = cannum +1
-                    spawn_model_client(model_name='can'+str(cannum) ,model_xml=open('/home/devlon/.gazebo/models/cricket_ball/model.sdf', 'r').read(),robot_namespace='/can'+str(cannum),initial_pose=Pose(position=Point(Ndest,-Edest,0)),reference_frame='world')
+                    spawn_model_client(model_name='can'+str(cannum) ,model_xml=open('/home/devlon/.gazebo/models/cricket_ball/model.sdf', 'r').read(),robot_namespace='/can'+str(cannum),initial_pose=Pose(position=Point(Edest,Ndest,0)),reference_frame='world')
                     flag = 0
-
-                Head_command = -(Head_t - (pi/2-curr_Head_hex))
-
-                if abs(Head_command) > pi:
-                    Head_command = Head_command - copysign(2*pi,Head_command)
-
-                if abs(Head_command) > 0.01:
-                    if abs(Head_command*180/pi) >= 15:
-                        PathVelmsg.linear.x=0; PathVelmsg.angular.z=copysign(15,Head_command)
-                        pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,copysign(15,-(Head_t - curr_Head_hex)))
-                    else:
-                        PathVelmsg.linear.x=0; PathVelmsg.angular.z=Head_command*180/pi
-                        pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,-(Head_t - curr_Head_hex)*180/pi)
                 else:
-                    PathVelmsg.linear.x=0; PathVelmsg.angular.z=0
-                    pub.publish(PathVelmsg) #robot.set_walk_velocity(0.0,0,0)
+                    PathVelmsg.linear.x=0; PathVelmsg.linear.y=0; PathVelmsg.angular.z=0
+                    pub.publish(PathVelmsg) 
                     L_t = sqrt((Ndest-Nsrc)**2+(Edest-Esrc)**2)
                     flag = 1
-
-                    # ct = array([[cos(Head_t), sin(Head_t)],[-sin(Head_t), cos(Head_t)]]) @ array([[n-Nsrc],[e-Esrc]])
-                    # startPos = ct[0] #11Nov
-
-                    # trapez.GenerateProfile(startPos,L_t,150) #11Nov
-                    # stepP.GenerateProfile(startPos,L_t,150) #Added 26Jan
                     TrapezstartTime = time.time() #11Nov
 
         rospy.sleep(0.1) 
