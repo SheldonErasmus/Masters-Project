@@ -110,7 +110,7 @@ if __name__ == '__main__':
     rospy.init_node("WayP_Nav")
 
 
-    stepP = StepProfile(0.1,150)
+    stepP = StepProfile(0.1,80)
     
     subIndoorGPS = rospy.Subscriber("hedge_pos_ang", hedge_pos_ang, hedge_pos_ang_callback, queue_size=1)
     # rospy.wait_for_message("hedge_pos_ang", hedge_pos_ang)
@@ -154,24 +154,27 @@ if __name__ == '__main__':
                         
                 ct_err_ref = 0.0
                 err_ref = ct_err_ref - ct_err
-                Ky = 0.7
+                Ky = 2
                 Head_ref = Head_t + Ky*err_ref
                 Head_command = -(Head_ref - (90-Cor_yaw_cur)*pi/180)
+
+                if abs(Head_command)>pi:
+                    Head_command = Head_command - copysign(2*pi,Head_command)
 
                 stepP.GenerateProfile(ct_dist,L_t,(time.time()-TrapezstartTime))
                 xdot = stepP.F(time.time()-TrapezstartTime)
                 V_hexTot = xdot
 
-                if abs(Head_command*180/pi) >= 15:
-                    PathVelmsg.linear.x=V_hexTot; PathVelmsg.angular.z=copysign(15,Head_command)
+                if abs(Head_command*180/pi) >= 12:
+                    PathVelmsg.linear.x=V_hexTot; PathVelmsg.linear.y=0; PathVelmsg.angular.z=copysign(12,Head_command)
                     pub.publish(PathVelmsg)
                 else:
-                    PathVelmsg.linear.x=V_hexTot; PathVelmsg.angular.z=Head_command*180/pi
+                    PathVelmsg.linear.x=V_hexTot; PathVelmsg.linear.y=0; PathVelmsg.angular.z=Head_command*180/pi
                     pub.publish(PathVelmsg)
                 
             else:
                 if flag == 1:
-                    PathVelmsg.linear.x=0; PathVelmsg.angular.z=0
+                    PathVelmsg.linear.x=0; PathVelmsg.linear.y=0; PathVelmsg.angular.z=0
                     pub.publish(PathVelmsg)
 
                     if index == total_items-2:
@@ -189,15 +192,20 @@ if __name__ == '__main__':
 
                     flag = 0
 
-                if abs(Head_t - (90-Cor_yaw_cur)*pi/180) > 0.05:
-                    if abs((Head_t - (90-Cor_yaw_cur)*pi/180)*180/pi) >= 15:
-                        PathVelmsg.linear.x=0; PathVelmsg.angular.z=copysign(15,-(Head_t - (90-Cor_yaw_cur)*pi/180))
+                Head_command = -(Head_t - (90-Cor_yaw_cur)*pi/180)
+
+                if abs(Head_command)>pi:
+                    Head_command = Head_command - copysign(2*pi,Head_command)
+
+                if abs(Head_command) > 0.05:
+                    if abs(Head_command*180/pi) >= 15:
+                        PathVelmsg.linear.x=0; PathVelmsg.linear.y=0; PathVelmsg.angular.z=copysign(15,Head_command)
                         pub.publish(PathVelmsg)
                     else:
-                        PathVelmsg.linear.x=0; PathVelmsg.angular.z=-(Head_t - (90-Cor_yaw_cur)*pi/180)*180/pi
+                        PathVelmsg.linear.x=0; PathVelmsg.linear.y=0; PathVelmsg.angular.z=Head_command*180/pi
                         pub.publish(PathVelmsg)
                 else:
-                    PathVelmsg.linear.x=0; PathVelmsg.angular.z=0
+                    PathVelmsg.linear.x=0; PathVelmsg.linear.y=0; PathVelmsg.angular.z=0
                     pub.publish(PathVelmsg)
                     L_t = sqrt((Ndest-Nsrc)**2+(Edest-Esrc)**2)
                     flag = 1
@@ -209,32 +217,105 @@ if __name__ == '__main__':
                 once = 0
                 onceStop = 1
                 headControlON = 1
-                Desired_Head = -float(input("Enter desired heading: "))*pi/180
+                Desired_Head = float(input("Enter desired heading: "))*pi/180
+                #Desired_Head = Desired_Head-2*pi if Desired_Head>pi else Desired_Head 
             Gain = 1
             ref_head = Desired_Head
-            Head_command = -Gain*(ref_head - (90-Cor_yaw_cur)*pi/180)
+            #cur_yaw_adjusted = 90-Cor_yaw_cur-360 if 90-Cor_yaw_cur>180 else 90-Cor_yaw_cur
+            cur_yaw_adjusted = Cor_yaw_cur
+            print(cur_yaw_adjusted)
+            Head_command = Gain*(ref_head - (cur_yaw_adjusted)*pi/180)
 
             if abs(Head_command) > pi:
                 Head_command = Head_command - copysign(2*pi,Head_command)
 
             if abs(Head_command*180/pi) < 0.5:
                 headControlON = 0
-            if abs(Head_command*180/pi) > 2:
+            if abs(Head_command*180/pi) > 8:
                 headControlON = 1
             
             if headControlON == 1: 
                 onceStop = 1
-                if abs(Head_command*180/pi) >= 15:
-                    PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=copysign(15,Head_command)
-                    pub.publish(PathVelmsg) #robot.set_walk_velocity(V_hexTot,0,copysign(15,Head_command))
+                if abs(Head_command*180/pi) >= 12:
+                    PathVelmsg.linear.x=float('nan'); PathVelmsg.linear.y=float('nan'); PathVelmsg.angular.z=copysign(12,Head_command)
+                    pub.publish(PathVelmsg) 
                 else:
-                    PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=Head_command*180/pi
+                    PathVelmsg.linear.x=float('nan'); PathVelmsg.linear.y=float('nan'); PathVelmsg.angular.z=Head_command*180/pi
                     pub.publish(PathVelmsg)
             elif onceStop == 1:
                 onceStop = 0
-                PathVelmsg.linear.x=float('nan'); PathVelmsg.angular.z=0.0*180/pi
+                PathVelmsg.linear.x=float('nan'); PathVelmsg.linear.y=float('nan'); PathVelmsg.angular.z=0.0*180/pi
                 pub.publish(PathVelmsg)
         
+        ##############################################
+        elif DoWaypointFlag == 1 and NavMode == 3:
+
+            if StartOfWaypoint == 1:
+                StartOfWaypoint = 0
+                
+                Esrc = Epoints[index]
+                Nsrc = Npoints[index]
+                Edest = Epoints[index+1]
+                Ndest = Npoints[index+1]
+
+                flag = 1
+
+                Head_t = atan2((Edest-Esrc),(Ndest-Nsrc))
+                L_t = sqrt((Ndest-Nsrc)**2+(Edest-Esrc)**2)
+
+                TrapezstartTime = time.time()
+
+            if flag == 1:
+                ct = array([[cos(Head_t), sin(Head_t)],[-sin(Head_t), cos(Head_t)]]) @ array([[n_cur-Nsrc],[e_cur-Esrc]])
+                ct_dist = ct[0]
+                ct_err = ct[1]
+
+            if ct_dist < L_t:
+                        
+                ct_err_ref = 0.0
+                err_ref = ct_err_ref - ct_err
+                Ky = 2
+                Head_ref = Head_t + Ky*err_ref
+                Head_command = (Head_ref - (90-Cor_yaw_cur)*pi/180)
+
+                if abs(Head_command)>pi:
+                    Head_command = Head_command - copysign(2*pi,Head_command)
+
+                stepP.GenerateProfile(ct_dist,L_t,(time.time()-TrapezstartTime))
+                xdot = stepP.F(time.time()-TrapezstartTime)
+                V_hexTot = xdot
+
+                
+                PathVelmsg.linear.x=V_hexTot*cos(Head_command); PathVelmsg.linear.y=V_hexTot*sin(Head_command); PathVelmsg.angular.z=0
+                pub.publish(PathVelmsg)
+                
+                
+            else:
+                if flag == 1:
+                    PathVelmsg.linear.x=0; PathVelmsg.linear.y=0; PathVelmsg.angular.z=0
+                    pub.publish(PathVelmsg)
+
+                    if index == total_items-2:
+                        index = 0
+                        DoWaypointFlag = 0
+                        continue
+                    else:
+                        index = index + 1
+
+                    Esrc = Edest
+                    Nsrc = Ndest
+                    Edest = Epoints[index+1]
+                    Ndest = Npoints[index+1]
+                    Head_t = atan2((Edest-Esrc),(Ndest-Nsrc))
+
+                    flag = 0
+                else:
+                    PathVelmsg.linear.x=0; PathVelmsg.linear.y=0; PathVelmsg.angular.z=0
+                    pub.publish(PathVelmsg)
+                    L_t = sqrt((Ndest-Nsrc)**2+(Edest-Esrc)**2)
+                    flag = 1
+                    TrapezstartTime = time.time()
+
         rospy.sleep(0.1) 
 
 

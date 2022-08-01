@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import rospy
-from math import atan2, pi
+from math import atan2, pi, copysign
 from marvelmind_nav.msg import hedge_pos_ang, hedge_imu_raw
 from std_msgs.msg import Float32
 
@@ -54,13 +54,22 @@ def imu_cb(msg):
     e_difference = e_cur-e_prev
     if abs(n_difference) > 200 or abs(e_difference) > 200: 
         Yaw_meas = atan2(n_difference,e_difference)*180/pi
-        Cor_yaw_cur = Cor_yaw_cur + mc1*(Yaw_meas - Est_yaw_cur)
+        dif1 = Yaw_meas - Est_yaw_cur
+        if abs(dif1)>180:
+            dif1 = dif1 - copysign(360,dif1)
+        Cor_yaw_cur = Cor_yaw_cur + mc1*(dif1)
     if 1:
-        Cor_yaw_cur = Cor_yaw_cur + mc2*(Yaw_meas_pair - Est_yaw_cur)
+        dif2 = Yaw_meas_pair - Est_yaw_cur
+        if abs(dif2)>180:
+            dif2 = dif2 - copysign(360,dif2)
+        Cor_yaw_cur = Cor_yaw_cur + mc2*(dif2)
     
+    if abs(Cor_yaw_cur)>180:
+        Cor_yaw_cur = Cor_yaw_cur - copysign(360,Cor_yaw_cur)
+
     Est_yaw_next = Cor_yaw_cur + Ts*Gyro_z
     pubyaw.publish(data=Cor_yaw_cur)
-    print(Cor_yaw_cur)
+    print(Cor_yaw_cur,Est_yaw_next,Ts*Gyro_z)
 
 if __name__ == '__main__':
     rospy.init_node("YawPub")
