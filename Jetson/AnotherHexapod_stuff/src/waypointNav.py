@@ -154,8 +154,8 @@ if __name__ == '__main__':
                         
                 ct_err_ref = 0.0
                 err_ref = ct_err_ref - ct_err
-                Ky = 2
-                Head_ref = Head_t + Ky*err_ref
+                Ky = 1
+                Head_ref = Head_t + Ky*err_ref; print(Head_ref)
                 Head_command = -(Head_ref - (90-Cor_yaw_cur)*pi/180)
 
                 if abs(Head_command)>pi:
@@ -191,6 +191,7 @@ if __name__ == '__main__':
                     Head_t = atan2((Edest-Esrc),(Ndest-Nsrc))
 
                     flag = 0
+                    rospy.sleep(1)
 
                 Head_command = -(Head_t - (90-Cor_yaw_cur)*pi/180)
 

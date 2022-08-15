@@ -15,7 +15,7 @@ def hedge_pos_ang_callback(msg):
     global n_prev, e_prev, d_prev, n_cur, e_cur, d_cur, Yaw_meas_pair, Flag, counter
 
     counter = counter + 1
-    if counter == 100:
+    if counter == 25:
         counter = 0
         e_prev = e_cur
         n_prev = n_cur
@@ -57,7 +57,7 @@ def imu_cb(msg):
         dif1 = Yaw_meas - Est_yaw_cur
         if abs(dif1)>180:
             dif1 = dif1 - copysign(360,dif1)
-        Cor_yaw_cur = Cor_yaw_cur + mc1*(dif1)
+        if abs(Yaw_meas - Yaw_meas_pair)<=10: Cor_yaw_cur = Cor_yaw_cur + mc1*(dif1)
     if 1:
         dif2 = Yaw_meas_pair - Est_yaw_cur
         if abs(dif2)>180:
