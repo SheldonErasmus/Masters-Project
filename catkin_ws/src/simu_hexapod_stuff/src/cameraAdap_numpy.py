@@ -36,7 +36,6 @@ class ImageListener:
             self.flag = 0 
             try:
                 temp = [np.frombuffer(data.data, dtype=np.uint16).reshape(data.height, data.width)]
-                temp1 = [self.bridge.imgmsg_to_cv2(data, data.encoding)]
                 self.cv_image = np.concatenate((self.cv_image[1:7],temp))
                 pose = [{"x":n,"y":e, "z":d,"yaw":yaw}]
                 self.image_pose = np.concatenate((self.image_pose[1:7],pose))
@@ -117,7 +116,7 @@ if __name__ == '__main__':
 
     rospy.wait_for_message('WorldFeetPlace',WorldFeetPlace)
     
-    H = 130 #height of cam
+    H = 135 #height of cam
     L = 60 #X offset of cam
     CA = 30 #cam angle
     LI = 17.5 #Left imager offset
@@ -138,13 +137,13 @@ if __name__ == '__main__':
             NewPosFlag = 0
 
             flag = [0,0,0,0,0,0]
-            zmax = [0,0,0,0,0,0]
+            zmin = [99999,99999,99999,99999,99999,99999]
             jmin = [99999,99999,99999,99999,99999,99999]
             TransZ = np.array([0.0,0.0,0.0,0.0,0.0,0.0])
 
             for k in range(0,6):
-                loopCounter = 0; loopBreak = 0
-                while loopCounter <= 6 and loopBreak == 0:
+                loopCounter = 6; loopBreak = 0
+                while loopCounter >= 0 and loopBreak == 0:
                     
                     n_snapshot = round(listener.image_pose[loopCounter]["x"],3)
                     e_snapshot = round(listener.image_pose[loopCounter]["y"],3)
@@ -156,23 +155,24 @@ if __name__ == '__main__':
                     
                     
 
-                    yc = [None for i in range(1000+1)]
-                    zc = [None for i in range(1000+1)]
+                    yc = [None for i in range(500+1)]
+                    zc = [None for i in range(500+1)]
 
                     i = 0
-                    for h in range(-200,800+1):
-                        yc[i] = (np.cos((90+CA)*np.pi/180)*FootXPos - np.sin((90+CA)*np.pi/180)*h + HL*np.sin(AngHL+CA*np.pi/180))
-                        zc[i] = (np.sin((90+CA)*np.pi/180)*FootXPos + np.cos((90+CA)*np.pi/180)*h - HL*np.cos(AngHL+CA*np.pi/180))
+                    for h in range(-200,300+1):
+                        yc[i] = round(np.cos((90+CA)*np.pi/180)*FootXPos - np.sin((90+CA)*np.pi/180)*h + HL*np.sin(AngHL+CA*np.pi/180))
+                        zc[i] = round(np.sin((90+CA)*np.pi/180)*FootXPos + np.cos((90+CA)*np.pi/180)*h - HL*np.cos(AngHL+CA*np.pi/180))
+                        if zc[i] <= 0: zc[i] = 1
                         i = i + 1
 
                     if k == 3:
                         k3_count = 0
                         TransZ_world_temp = [0.0,0.0]
-                        FootYPos = FootYPos + np.array([-20,20])
-                        xc = -FootYPos + LI
+                        FootYPos = FootYPos + np.array([-50,50])
+                        xc = np.round(-FootYPos + LI)
                     else:
                         xc = [None]
-                        xc[0] = -FootYPos + LI
+                        xc[0] = np.round(-FootYPos + LI)
 
                     
                     for XC in xc:
@@ -187,26 +187,27 @@ if __name__ == '__main__':
                                 if Pixels[1] < 0 or Pixels[1] >= listener.intrinsics.height: continue
                                 depth = listener.cv_image[loopCounter][Pixels[1],Pixels[0]] 
 
-                                if isclose(depth,j,rel_tol=0.01,abs_tol=0.0): #abs((depth-j)/depth) < 0.02
+                                if isclose(depth,j,rel_tol=0.008,abs_tol=0.0): #abs((depth-j)/depth) < 0.02
                                     loopBreak = 1
                                     flag[k] = 1
                                     z = depth 
+                                    xcc,ycc,zcc = rs2.rs2_deproject_pixel_to_point(listener.intrinsics,Pixels,z)
 
-                                    if j < jmin[k]:
+                                    if z < zmin[k]:
                                         jmin[k] = j
-                                        zmax[k] = z
-                                        TransZ[k] = round(np.sin((-90-CA)*np.pi/180)*i + np.cos((-90-CA)*np.pi/180)*j + HL*np.sin(AngHL))
+                                        zmin[k] = z
+                                        TransZ[k] = round(np.sin((-90-CA)*np.pi/180)*ycc + np.cos((-90-CA)*np.pi/180)*z + HL*np.sin(AngHL))
                             
                         if flag[k] == 0:
-                            zmax[k] = None
                             TransZ[k]= None
                     
-                        #print([zmax,TransZ])
+                        #print([zmin,TransZ])
 
                         beta = 0*np.pi/180; gamma = -0*np.pi/180; alpha = 0; Z_gps = -d_snapshot*1000
 
                         if k == 3:
                             jmin[k] = 99999
+                            zmin[k] = 99999
                             TransZ_world_temp[k3_count] = (np.cos(beta)*np.sin(gamma)*np.sin(alpha)-np.sin(beta)*np.cos(alpha))*FootXPos + (np.sin(beta)*np.sin(alpha)+np.cos(beta)*np.sin(gamma)*np.cos(alpha))*FootYPos[k3_count] + (np.cos(beta)*np.cos(gamma))*TransZ[k] + Z_gps
                             if k3_count == 1:
                                 TransZ_world[k] = (TransZ_world_temp[0] + TransZ_world_temp[1])/2
@@ -215,8 +216,9 @@ if __name__ == '__main__':
                             TransZ_world[k] = (np.cos(beta)*np.sin(gamma)*np.sin(alpha)-np.sin(beta)*np.cos(alpha))*FootXPos + (np.sin(beta)*np.sin(alpha)+np.cos(beta)*np.sin(gamma)*np.cos(alpha))*FootYPos + (np.cos(beta)*np.cos(gamma))*TransZ[k] + Z_gps
 
                         if TransZ_world[k] < 0.0: TransZ_world[k] = 0
+                        if TransZ_world[k] >=20: TransZ_world[k] = TransZ_world[k]+7
 
-                    loopCounter = loopCounter + 1
+                    loopCounter = loopCounter - 1
 
             #print(TransZ); 
             print("\t"); print(TransZ_world)
@@ -238,7 +240,7 @@ if __name__ == '__main__':
                 if msg.path_var.Fh[k+6] > msg.path_var.Fh[k]:
                     msg.path_var.Fh[k] = msg.path_var.Fh[k+6]
 
-            msg.path_var.Sh = [50, 50, 50, 50, 50, 50]+msg.path_var.Fh[0:6]
+            msg.path_var.Sh = [50, 50, 50, 50, 50, 50]+msg.path_var.Fh[0:6]/4
             #msg.path_var.Fh = TransZ_world[0:6]
             msg.Name = 'Camera'
             pub.publish(msg)
