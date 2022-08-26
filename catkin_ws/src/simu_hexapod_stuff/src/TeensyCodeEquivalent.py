@@ -308,10 +308,10 @@ def ConstrainCheck2(th1,th2,th3):
     LegitMove = 1
 
     for i in range(6):
-        if th3[i] > 0 or th3[i] < -150/180*pi:
+        if th3[i] > 0 or th3[i] < -180/180*pi:
             LegitMove = 0
 
-        if th2[i] > 75/180*pi or th2[i] < -90/180*pi:
+        if th2[i] > 90/180*pi or th2[i] < -90/180*pi:
             LegitMove = 0
 
         if th1[i] > 50/180*pi or th1[i] < -50/180*pi:

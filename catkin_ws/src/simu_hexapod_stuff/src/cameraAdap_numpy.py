@@ -89,8 +89,8 @@ def FeetPlace_cb(msg):
     FeetPlaceXBuffer = np.array(msg.XPlace) #np.concatenate((FeetPlaceXBuffer[6:12],msg.XPlace))
     FeetPlaceYBuffer = np.array(msg.YPlace) #np.concatenate((FeetPlaceYBuffer[6:12],msg.YPlace))
     NewPosFlag = 1
-    if adjustHeightFlag == -2: adjustHeightFlag = 0
-    if adjustHeightFlag == -1: adjustHeightFlag = 1
+    # if adjustHeightFlag == -2: adjustHeightFlag = 0
+    # if adjustHeightFlag == -1: adjustHeightFlag = 1
 
 def FeetOnFloor_cb(msg):
     global adjustHeightFlag
@@ -116,9 +116,9 @@ if __name__ == '__main__':
 
     rospy.wait_for_message('WorldFeetPlace',WorldFeetPlace)
     
-    H = 135 #height of cam
-    L = 60 #X offset of cam
-    CA = 30 #cam angle
+    H = 215 #height of cam
+    L = 22 #X offset of cam
+    CA = 35 #cam angle
     LI = 17.5 #Left imager offset
     
     HL = np.sqrt(H**2+L**2) #slope of offsets
@@ -128,22 +128,24 @@ if __name__ == '__main__':
 
     while not rospy.is_shutdown():
 
-        FootXPos_world = FeetPlaceXBuffer*1000 
-        #FootXPos_world = np.array([450.0,450.0,450.0,600.0,600.0,600.0])
-        FootYPos_world = FeetPlaceYBuffer*1000 
-        #FootYPos_world = np.array([0.0,125.0,-125.0,0.0,125.0,-125.0])
-
         if NewPosFlag == 1:
             NewPosFlag = 0
+            if adjustHeightFlag == -2: adjustHeightFlag = 0
+            if adjustHeightFlag == -1: adjustHeightFlag = 1
+
+            FootXPos_world = FeetPlaceXBuffer*1000 
+            #FootXPos_world = np.array([450.0,450.0,450.0,600.0,600.0,600.0])
+            FootYPos_world = FeetPlaceYBuffer*1000 
+            #FootYPos_world = np.array([0.0,125.0,-125.0,0.0,125.0,-125.0])
 
             flag = [0,0,0,0,0,0]
             zmin = [99999,99999,99999,99999,99999,99999]
             jmin = [99999,99999,99999,99999,99999,99999]
             TransZ = np.array([0.0,0.0,0.0,0.0,0.0,0.0])
 
-            for k in range(0,6):
-                loopCounter = 6; loopBreak = 0
-                while loopCounter >= 0 and loopBreak == 0:
+            for k in [0,1,2,3,4,5]:#range(0,6):
+                loopCounter = 0; loopBreak = 0
+                while loopCounter <= 6 and loopBreak == 0:
                     
                     n_snapshot = round(listener.image_pose[loopCounter]["x"],3)
                     e_snapshot = round(listener.image_pose[loopCounter]["y"],3)
@@ -203,7 +205,7 @@ if __name__ == '__main__':
                     
                         #print([zmin,TransZ])
 
-                        beta = 0*np.pi/180; gamma = -0*np.pi/180; alpha = 0; Z_gps = -d_snapshot*1000
+                        beta = 0*np.pi/180; gamma = -0*np.pi/180; alpha = 0; Z_gps = 123#-d_snapshot*1000
 
                         if k == 3:
                             jmin[k] = 99999
@@ -218,7 +220,7 @@ if __name__ == '__main__':
                         if TransZ_world[k] < 0.0: TransZ_world[k] = 0
                         if TransZ_world[k] >=20: TransZ_world[k] = TransZ_world[k]+7
 
-                    loopCounter = loopCounter - 1
+                    loopCounter = loopCounter + 1
 
             #print(TransZ); 
             print("\t"); print(TransZ_world)
@@ -240,7 +242,7 @@ if __name__ == '__main__':
                 if msg.path_var.Fh[k+6] > msg.path_var.Fh[k]:
                     msg.path_var.Fh[k] = msg.path_var.Fh[k+6]
 
-            msg.path_var.Sh = [50, 50, 50, 50, 50, 50]+msg.path_var.Fh[0:6]/4
+            msg.path_var.Sh = [50, 50, 50, 50, 50, 50]+msg.path_var.Fh[0:6]
             #msg.path_var.Fh = TransZ_world[0:6]
             msg.Name = 'Camera'
             pub.publish(msg)
@@ -261,7 +263,7 @@ if __name__ == '__main__':
                 if msg.path_var.Fh[k+6] > msg.path_var.Fh[k]:
                     msg.path_var.Fh[k] = msg.path_var.Fh[k+6]
 
-            msg.path_var.Sh = [50, 50, 50, 50, 50, 50]+msg.path_var.Fh[0:6]/4
+            msg.path_var.Sh = [50, 50, 50, 50, 50, 50]+msg.path_var.Fh[0:6]
             #msg.path_var.Fh = TransZ_world[0:6]
             msg.Name = 'Camera'
             pub.publish(msg)

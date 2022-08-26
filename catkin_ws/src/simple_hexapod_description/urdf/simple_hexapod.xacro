@@ -605,7 +605,7 @@
 <xacro:include filename="$(find realsense2_description)/urdf/_d435.urdf.xacro" />
 
 <xacro:sensor_d435 name="camera" topics_ns="camera" parent="base_link" publish_pointcloud="true">
-  <origin xyz="0.055 0 0.13" rpy="0 0.5236 0" />
+  <origin xyz="0.017 0 0.210" rpy="0 0.6109 0" />
 </xacro:sensor_d435> 
 
 

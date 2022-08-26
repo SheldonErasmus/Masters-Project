@@ -114,9 +114,9 @@ if __name__ == '__main__':
 
     robot = HexapodC()
     
-    H = 135 #height of cam
-    L = 60 #X offset of cam
-    CA = 30 #cam angle
+    H = 215 #height of cam
+    L = 22 #X offset of cam
+    CA = 35 #cam angle
     LI = 17.5 #Left imager offset
     
     HL = np.sqrt(H**2+L**2) #slope of offsets
