@@ -41,7 +41,7 @@ def imu_cb(msg):
         Gyro_z = 0
     else:
         Gyro_z = msg.gyro_z*0.0175
-
+    #print(Gyro_z)
     mc1 = 0.5
     mc2 = 0.07
     Ts = 1/100

@@ -95,7 +95,7 @@ if __name__ == '__main__':
     
     robot = HexapodC()
 
-    fileName = 'IMUdataRec2.csv'
+    fileName = 'IMUdataRec_2_1.csv'
     try:
         with open(fileName,"w") as file:
             file.write("timestamp,roll_input,pitch_input,measure_roll,measure_pitch\n")

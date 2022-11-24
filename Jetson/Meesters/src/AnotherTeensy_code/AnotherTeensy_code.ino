@@ -541,8 +541,8 @@ void SetAngles(float* th1,float* th2,float* th3 ,float spd1,float spd2, float sp
       Id[num] = 0;
       
       /*if(abs(prevAngle[num]-Angle[num]) >= 0.15)*/ prevAngle[num] = Angle[num];
-      //mfb0 = String(milli) + "," + String(th1[0],2) + "," + String((dxl.PresentPos(Id[num])-150)*M_PI/180,2);
-      mfb0 = String(th1[0],2);
+      mfb0 = String(milli) + "," + String(th1[0],2) + "," + String((dxl.PresentPos(Id[num])-150)*M_PI/180,2);
+      //mfb0 = String(th1[0],2);
         
     }
     else if (num == 1)  //thata21
@@ -561,8 +561,8 @@ void SetAngles(float* th1,float* th2,float* th3 ,float spd1,float spd2, float sp
       dtostrf(th2[0], 5, 5, buff);
       strcat(dataStr, buff);*/
       
-      //mfb1 = String(milli) + "," + String(th2[0]) + "," + String(-(dxl.PresentPos(Id[num])-150)*M_PI/180,2);
-      mfb1 = String(th2[0],2);
+      mfb1 = String(th2[0]) + "," + String(-(dxl.PresentPos(Id[num])-150)*M_PI/180,2);
+      //mfb1 = String(th2[0],2);
     }
     else if (num == 2)  //thata31
     {
@@ -572,8 +572,8 @@ void SetAngles(float* th1,float* th2,float* th3 ,float spd1,float spd2, float sp
 
       /*if(abs(prevAngle[num]-Angle[num]) >= 0.15)*/ prevAngle[num] = Angle[num];
       
-      //mfb2 = String(milli) + "," + String(th3[0]) + "," + String(-(dxl.PresentPos(Id[num])-150)*M_PI/180,2);
-      mfb2 = String(th3[0],2);
+      mfb2 = String(th3[0]) + "," + String(-(dxl.PresentPos(Id[num])-150)*M_PI/180,2);
+      //mfb2 = String(th3[0],2);
     }
     else if (num == 3)  //thata12
     {
@@ -615,8 +615,8 @@ void SetAngles(float* th1,float* th2,float* th3 ,float spd1,float spd2, float sp
       Spd[num] = spd1;
       Id[num] = 6;
       
-      //mfb6 = String(milli) + "," + String(th1[2]) + "," + String((dxl.PresentPos(Id[num])-150)*M_PI/180,2);
-      mfb6 = String(th1[2],2);
+      mfb6 = String(th1[2]) + "," + String((dxl.PresentPos(Id[num])-150)*M_PI/180,2);
+      //mfb6 = String(th1[2],2);
     }
     else if (num == 7)  //thata23
     {
@@ -624,8 +624,8 @@ void SetAngles(float* th1,float* th2,float* th3 ,float spd1,float spd2, float sp
       Spd[num] = spd2;
       Id[num] = 7;
 
-      //mfb7 = String(milli) + "," + String(th2[2]) + "," + String(-(dxl.PresentPos(Id[num])-150)*M_PI/180,2);
-      mfb7 = String(th2[2],2);
+      mfb7 = String(th2[2]) + "," + String(-(dxl.PresentPos(Id[num])-150)*M_PI/180,2);
+      //mfb7 = String(th2[2],2);
     }
     else if (num == 8)  //thata33
     {
@@ -633,8 +633,8 @@ void SetAngles(float* th1,float* th2,float* th3 ,float spd1,float spd2, float sp
       Spd[num] = spd3;
       Id[num] = 8;
       
-      //mfb8 = String(milli) + "," + String(th3[2]) + "," + String(-(dxl.PresentPos(Id[num])-150)*M_PI/180,2);
-      mfb8 = String(th3[2],2);
+      mfb8 = String(th3[2]) + "," + String(-(dxl.PresentPos(Id[num])-150)*M_PI/180,2);
+      //mfb8 = String(th3[2],2);
     }
     else if (num == 9)  //thata14
     {
@@ -669,8 +669,8 @@ void SetAngles(float* th1,float* th2,float* th3 ,float spd1,float spd2, float sp
       Spd[num] = spd1;
       Id[num] = 12;
 
-      //mfb12 = String(milli) + "," + String(th1[4]) + "," + String((dxl.PresentPos(Id[num])-150)*M_PI/180,2);
-      mfb12 = String(th1[4],2);
+      mfb12 = String(th1[4]) + "," + String((dxl.PresentPos(Id[num])-150)*M_PI/180,2);
+      //mfb12 = String(th1[4],2);
     }
     else if (num == 13) //thata25
     {
@@ -678,8 +678,8 @@ void SetAngles(float* th1,float* th2,float* th3 ,float spd1,float spd2, float sp
       Spd[num] = spd2;
       Id[num] = 13;
       
-      //mfb13 = String(milli) + "," + String(th2[4]) + "," + String(-(dxl.PresentPos(Id[num])-150)*M_PI/180,2);
-      mfb13 = String(th2[4],2);
+      mfb13 = String(th2[4]) + "," + String(-(dxl.PresentPos(Id[num])-150)*M_PI/180,2);
+      //mfb13 = String(th2[4],2);
     }
     else if (num == 14) //thata35
     {
@@ -687,8 +687,8 @@ void SetAngles(float* th1,float* th2,float* th3 ,float spd1,float spd2, float sp
       Spd[num] = spd3;
       Id[num] = 14;
 
-      //mfb14 = String(milli) + "," + String(th3[4]) + "," + String(-(dxl.PresentPos(Id[num])-150)*M_PI/180,2);
-      mfb14 = String(th3[4],2);
+      mfb14 = String(th3[4]) + "," + String(-(dxl.PresentPos(Id[num])-150)*M_PI/180,2);
+      //mfb14 = String(th3[4],2);
     }
     else if (num == 15) //thata16
     {
@@ -720,7 +720,8 @@ void SetAngles(float* th1,float* th2,float* th3 ,float spd1,float spd2, float sp
   }
 
   dxl.SyncMove(Id,Angle,Spd,18);
-  //pubAngleFB(mfb0,mfb1,mfb2,mfb3,mfb4,mfb5,mfb6,mfb7,mfb8,mfb9,mfb10,mfb11,mfb12,mfb13,mfb14,mfb15,mfb16,mfb17);
+  pubAngleFB(mfb0,mfb1,mfb2,mfb3,mfb4,mfb5,mfb6,mfb7,mfb8,mfb9,mfb10,mfb11,mfb12,mfb13,mfb14,mfb15,mfb16,mfb17);
+
 
 }
 
@@ -800,58 +801,59 @@ void ConstrainCheck2(float* th1,float* th2,float* th3)
 
 void pubAngleFB(String &mfb0,String &mfb1,String &mfb2,String &mfb3,String &mfb4,String &mfb5,String &mfb6,String &mfb7,String &mfb8,String &mfb9,String &mfb10,String &mfb11,String &mfb12,String &mfb13,String &mfb14,String &mfb15,String &mfb16,String &mfb17)
 {
-  motor_feedback[0].data = mfb0.c_str();
+  String feed = mfb0+ ","+mfb1+ ","+mfb2+ ","+mfb6+ ","+mfb7+ ","+mfb8+ ","+mfb12+ ","+mfb13+ ","+mfb14;
+  motor_feedback[0].data = feed.c_str();
   pub_m_feed0.publish(&motor_feedback[0]);
   
-  motor_feedback[1].data = mfb1.c_str();
-  pub_m_feed1.publish(&motor_feedback[1]);
-  
-  motor_feedback[2].data = mfb2.c_str();
-  pub_m_feed2.publish(&motor_feedback[2]);
-  
-  motor_feedback[3].data = mfb3.c_str();
-  //pub_m_feed3.publish(&motor_feedback[3]);
-  
-  motor_feedback[4].data = mfb4.c_str();
-  //pub_m_feed4.publish(&motor_feedback[4]);
-  
-  motor_feedback[5].data = mfb5.c_str();
-  //pub_m_feed5.publish(&motor_feedback[5]);
-  
-  motor_feedback[6].data = mfb6.c_str();
-  //pub_m_feed6.publish(&motor_feedback[6]);
-  
-  motor_feedback[7].data = mfb7.c_str();
-  //pub_m_feed7.publish(&motor_feedback[7]);
-  
-  motor_feedback[8].data = mfb8.c_str();
-  //pub_m_feed8.publish(&motor_feedback[8]);
-  
-  motor_feedback[9].data = mfb9.c_str();
-  //pub_m_feed9.publish(&motor_feedback[9]);
-  
-  motor_feedback[10].data = mfb10.c_str();
-  //pub_m_feed10.publish(&motor_feedback[10]);
-  
-  motor_feedback[11].data = mfb11.c_str();
-  //pub_m_feed11.publish(&motor_feedback[11]);
-  
-  motor_feedback[12].data = mfb12.c_str();
-  //pub_m_feed12.publish(&motor_feedback[12]);
-  
-  motor_feedback[13].data = mfb13.c_str();
-  //pub_m_feed13.publish(&motor_feedback[13]);
-  
-  motor_feedback[14].data = mfb14.c_str();
-  //pub_m_feed14.publish(&motor_feedback[14]);
-  
-  motor_feedback[15].data = mfb15.c_str();
-  //pub_m_feed15.publish(&motor_feedback[15]);
-  
-  motor_feedback[16].data = mfb16.c_str();
-  //pub_m_feed16.publish(&motor_feedback[16]);
-  
-  motor_feedback[17].data = mfb17.c_str();
-  //pub_m_feed17.publish(&motor_feedback[17]);
+//  motor_feedback[1].data = mfb1.c_str();
+//  //pub_m_feed1.publish(&motor_feedback[1]);
+//  
+//  motor_feedback[2].data = mfb2.c_str();
+//  //pub_m_feed2.publish(&motor_feedback[2]);
+//  
+//  motor_feedback[3].data = mfb3.c_str();
+//  //pub_m_feed3.publish(&motor_feedback[3]);
+//  
+//  motor_feedback[4].data = mfb4.c_str();
+//  //pub_m_feed4.publish(&motor_feedback[4]);
+//  
+//  motor_feedback[5].data = mfb5.c_str();
+//  //pub_m_feed5.publish(&motor_feedback[5]);
+//  
+//  motor_feedback[6].data = mfb6.c_str();
+//  //pub_m_feed6.publish(&motor_feedback[6]);
+//  
+//  motor_feedback[7].data = mfb7.c_str();
+//  //pub_m_feed7.publish(&motor_feedback[7]);
+//  
+//  motor_feedback[8].data = mfb8.c_str();
+//  //pub_m_feed8.publish(&motor_feedback[8]);
+//  
+//  motor_feedback[9].data = mfb9.c_str();
+//  //pub_m_feed9.publish(&motor_feedback[9]);
+//  
+//  motor_feedback[10].data = mfb10.c_str();
+//  //pub_m_feed10.publish(&motor_feedback[10]);
+//  
+//  motor_feedback[11].data = mfb11.c_str();
+//  //pub_m_feed11.publish(&motor_feedback[11]);
+//  
+//  motor_feedback[12].data = mfb12.c_str();
+//  //pub_m_feed12.publish(&motor_feedback[12]);
+//  
+//  motor_feedback[13].data = mfb13.c_str();
+//  //pub_m_feed13.publish(&motor_feedback[13]);
+//  
+//  motor_feedback[14].data = mfb14.c_str();
+//  //pub_m_feed14.publish(&motor_feedback[14]);
+//  
+//  motor_feedback[15].data = mfb15.c_str();
+//  //pub_m_feed15.publish(&motor_feedback[15]);
+//  
+//  motor_feedback[16].data = mfb16.c_str();
+//  //pub_m_feed16.publish(&motor_feedback[16]);
+//  
+//  motor_feedback[17].data = mfb17.c_str();
+//  //pub_m_feed17.publish(&motor_feedback[17]);
   
 }

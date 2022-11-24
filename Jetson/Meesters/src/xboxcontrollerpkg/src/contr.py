@@ -332,7 +332,7 @@ try:
                                 turnAng = turnAng + 0.25
                             elif flag_x == 1:
                                 flag_x = 0
-                                turnAng = turnAng - 0.25
+                                turnAng = turnAng - 12
 
                             if turnAng > 30:
                                 turnAng = 30

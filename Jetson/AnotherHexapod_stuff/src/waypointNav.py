@@ -18,6 +18,7 @@ e_prev = 0.0
 d_prev = 0.0
 curr_Head_hex = 0.0; hex_roll = 0.0; hex_pitch = 0.0
 Head_ref = 0.0; Head_command = 0.0
+Gain = 0
 
 n_cur=0; e_cur=0; d_cur=0; Yaw_meas_pair=0; Flag=0; counter = 98
 index=0; total_items=0; movement_type=0; Epoints=0; Npoints=0; DoWaypointFlag=0
@@ -110,11 +111,11 @@ def NavMode_cb(msg):
 if __name__ == '__main__':
     rospy.init_node("WayP_Nav")
 
-    fileName = 'WayPointdataRec.csv'
+    fileName = 'waypnav3_2.csv'
     file = open(fileName,"w")
-    file.write("e_point,n_point,e_cur,n_cur,Cur_head,Head_ref,Head_command\n")
+    # file.write("timestamp,e_point,n_point,e_cur,n_cur,Cur_head,Head_ref,Head_command\n")
 
-    stepP = StepProfile(0.1,80)
+    stepP = StepProfile(0.1,60)
     
     subIndoorGPS = rospy.Subscriber("hedge_pos_ang", hedge_pos_ang, hedge_pos_ang_callback, queue_size=1)
     # rospy.wait_for_message("hedge_pos_ang", hedge_pos_ang)
@@ -129,6 +130,7 @@ if __name__ == '__main__':
     PathVelmsg.Name = "Waypoint"
 
     StartOfWaypoint = 1
+    TrapezstartTime=0;L_t=0;ct_dist=0;xdot=0;Head_t=0;ct_err=0
 
     while not rospy.is_shutdown():
 
@@ -222,31 +224,34 @@ if __name__ == '__main__':
                 once = 0
                 onceStop = 1
                 headControlON = 1
-                Desired_Head = float(input("Enter desired heading: "))*pi/180
+                Desired_Head = 3*pi/180#float(input("Enter desired heading: "))*pi/180
                 #Desired_Head = Desired_Head-2*pi if Desired_Head>pi else Desired_Head 
-            Gain = 1
+            Gain = 0.25
             Head_ref = Desired_Head
             #cur_yaw_adjusted = 90-Cor_yaw_cur-360 if 90-Cor_yaw_cur>180 else 90-Cor_yaw_cur
             cur_yaw_adjusted = Cor_yaw_cur
             print(cur_yaw_adjusted)
-            Head_command = Gain*(Head_ref - (cur_yaw_adjusted)*pi/180)
+            Head_command = (Head_ref - (cur_yaw_adjusted)*pi/180)
 
             if abs(Head_command) > pi:
                 Head_command = Head_command - copysign(2*pi,Head_command)
 
             if abs(Head_command*180/pi) < 0.5:
                 headControlON = 0
+                Desired_Head = 178*pi/180
             if abs(Head_command*180/pi) > 8:
                 headControlON = 1
-            
+
             if headControlON == 1: 
                 onceStop = 1
-                if abs(Head_command*180/pi) >= 12:
+                if abs(Gain*Head_command*180/pi) >= 12:
                     PathVelmsg.linear.x=float('nan'); PathVelmsg.linear.y=float('nan'); PathVelmsg.angular.z=copysign(12,Head_command)
                     pub.publish(PathVelmsg) 
+                    Head_command = copysign(12*pi/180,Head_command)
                 else:
-                    PathVelmsg.linear.x=float('nan'); PathVelmsg.linear.y=float('nan'); PathVelmsg.angular.z=Head_command*180/pi
+                    PathVelmsg.linear.x=float('nan'); PathVelmsg.linear.y=float('nan'); PathVelmsg.angular.z=Gain*Head_command*180/pi
                     pub.publish(PathVelmsg)
+                    Head_command = Gain*Head_command
             elif onceStop == 1:
                 onceStop = 0
                 PathVelmsg.linear.x=float('nan'); PathVelmsg.linear.y=float('nan'); PathVelmsg.angular.z=0.0*180/pi
@@ -321,7 +326,8 @@ if __name__ == '__main__':
                     flag = 1
                     TrapezstartTime = time.time()
 
-        file.write(str(Epoints) + "," + str(Npoints) + "," + str(e_cur) + "," + str(n_cur) + "," + str(Cor_yaw_cur) + "," + str(Head_ref) + "," + str(Head_command) + "\n")
+        #file.write(str(time.time()*1000) + "," + str(60) + "," + str(TrapezstartTime) + "," + str(L_t) + "," + str(ct_dist) + "," + str(xdot) + "\n")
+        file.write(str(time.time()*1000) + "," + str(Head_t) + "," + str(L_t) + "," + str(ct_dist) + "," + str(ct_err) + "," + str(Epoints) + "," + str(Npoints) + "," + str(e_cur) + "," + str(n_cur) + "," + str(Cor_yaw_cur) + "," + str(Head_ref) + "," + str(Head_command) + "\n")
         rospy.sleep(0.1) 
 
     file.close()

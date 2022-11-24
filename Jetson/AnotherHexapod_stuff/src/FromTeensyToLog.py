@@ -148,11 +148,29 @@ theta1_1_Send = 0
 theta1_1_fb = 0
 ttime = 0
 def logdata7_cb(msg):
-    global flag7, ttime, theta1_1_Send, theta1_1_fb
+    global flag7, ttime, theta1_1_Send, theta2_1_Send, theta3_1_Send, theta1_3_Send, theta2_3_Send, theta3_3_Send, theta1_5_Send, theta2_5_Send, theta3_5_Send, theta1_1_fb, theta2_1_fb, theta3_1_fb, theta1_3_fb, theta2_3_fb, theta3_3_fb, theta1_5_fb, theta2_5_fb, theta3_5_fb
     flag7 = 1
     data=[float(s) for s in findall('[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?',msg.data)]
-    #ttime = data[0]
-    theta1_1_Send = data[0]
+    ttime = data[0]
+    theta1_1_Send = data[1]
+    theta2_1_Send = data[3]
+    theta3_1_Send = data[5]
+    theta1_3_Send = data[7]
+    theta2_3_Send = data[9]
+    theta3_3_Send = data[11]
+    theta1_5_Send = data[13]
+    theta2_5_Send = data[15]
+    theta3_5_Send = data[17]
+
+    theta1_1_fb = data[2]
+    theta2_1_fb = data[4]
+    theta3_1_fb = data[6]
+    theta1_3_fb = data[8]
+    theta2_3_fb = data[10]
+    theta3_3_fb = data[12]
+    theta1_5_fb = data[14]
+    theta2_5_fb = data[16]
+    theta3_5_fb = data[18]
     #theta1_1_fb = data[2]
 
 flag8 = 0
@@ -193,7 +211,7 @@ if __name__ == '__main__':
 
     fk = FK()
 
-    fileName = 'dataRec3.csv'
+    fileName = 'IMUTestData2_1.csv'
     # file = open(fileName,"w")
     subIndoorGPS = rospy.Subscriber("hedge_pos_ang", hedge_pos_ang, hedge_pos_ang_callback, queue_size=1)
     subyaw = rospy.Subscriber('/simple_hexapod/calculated_yaw', Float32, yaw_cb, queue_size=1)
@@ -215,7 +233,7 @@ if __name__ == '__main__':
     try:
         with open(fileName,"w") as file:
             while not rospy.is_shutdown():
-                if flag1 == 1 and flag4 == 1 and flag7 == 1 and NewPosFlag == 0:
+                if flag1 == 0 and flag4 == 0 and flag7 == 1 : #and NewPosFlag == 0:
                     flag1 = 0;flag2 = 0;flag3 = 0;flag4 = 0;flag5 = 0;flag6 = 0;flag7 = 0;NewPosFlag = -1
 
                     bodyXpos = e_cur*1000
@@ -234,17 +252,19 @@ if __name__ == '__main__':
 
                     Px_5_w = Px_5_Send*cos(bodyYaw) - Py_5_Send*sin(bodyYaw) + bodyXpos
                     Py_5_w = Px_5_Send*sin(bodyYaw) + Py_5_Send*cos(bodyYaw) + bodyYpos
-                    # Pz_5_w = Pz_5_Send + 140#bodyZpos+15
+                    Pz_5_w = Pz_5_Send + 140#bodyZpos+15
 
                     Px_3_w = Px_3_Send*cos(bodyYaw) - Py_3_Send*sin(bodyYaw) + bodyXpos
                     Py_3_w = Px_3_Send*sin(bodyYaw) + Py_3_Send*cos(bodyYaw) + bodyYpos
-                    # Pz_3_w = Pz_3_Send + 140#bodyZpos+15
+                    Pz_3_w = Pz_3_Send + 140#bodyZpos+15
 
                     Px_1_w = Px_1_Send*cos(bodyYaw) - Py_1_Send*sin(bodyYaw) + bodyXpos
                     Py_1_w = Px_1_Send*sin(bodyYaw) + Py_1_Send*cos(bodyYaw) + bodyYpos
-                    # Pz_1_w = Pz_1_Send + 140#bodyZpos+15
+                    Pz_1_w = Pz_1_Send + 140#bodyZpos+15
 
-                    file.write(str(ttime) + "," + str(Px_1_w) + "," + str(Py_1_w) + "," + str(FeetPlaceXBuffer[0]) + "," + str(FeetPlaceYBuffer[0]) + "," + str(Px_3_w) + "," + str(Py_3_w) + "," + str(FeetPlaceXBuffer[2]) + "," + str(FeetPlaceYBuffer[2]) + "," + str(Px_5_w) + "," + str(Py_5_w) + "," + str(FeetPlaceXBuffer[4]) + "," + str(FeetPlaceYBuffer[4])  + "\n")
+                    #file.write(str(ttime) + "," + str(Px_1_w) + "," + str(Py_1_w) + "," + str(FeetPlaceXBuffer[0]) + "," + str(FeetPlaceYBuffer[0]) + "," + str(Px_3_w) + "," + str(Py_3_w) + "," + str(FeetPlaceXBuffer[2]) + "," + str(FeetPlaceYBuffer[2]) + "," + str(Px_5_w) + "," + str(Py_5_w) + "," + str(FeetPlaceXBuffer[4]) + "," + str(FeetPlaceYBuffer[4])  + "\n")
+                    #file.write(str(ttime) + "," + str(Px_1_Send) + "," + str(Py_1_Send) + "," + str(Pz_1_Send) + "," + str(Px_1_fb) + "," + str(Py_1_fb) + "," + str(Pz_1_fb) + "," + str(Px_3_Send) + "," + str(Py_3_Send) + "," + str(Pz_3_Send) + "," + str(Px_3_fb) + "," + str(Py_3_fb) + "," + str(Pz_3_fb) + "," + str(Px_5_Send) + "," + str(Py_5_Send) + "," + str(Pz_5_Send) + "," + str(Px_5_fb) + "," + str(Py_5_fb) + "," + str(Pz_5_fb) + "\n")
+                    file.write(str(ttime) + "," + str(Px_1_w) + "," + str(Py_1_w) + "," + str(Pz_1_w) + "," + str(Px_3_w) + "," + str(Py_3_w) + "," + str(Pz_3_w)  + "," + str(Px_5_w) + "," + str(Py_5_w) + "," + str(Pz_5_w) + "\n")
 
                 # rospy.sleep(0.01)
     except KeyboardInterrupt:
